@@ -21,10 +21,16 @@ matrix:
         - choco install julia
         - julia --color=yes -e 'using InteractiveUtils; versioninfo(verbose=true)'
         - julia --color=yes -e 'using Pkg; pkg"dev ."'
+      before_script:
+        - julia --color=yes -e 'using Pkg; Pkg.build("H3")'
+        - julia --color=yes -e 'using Pkg; pkg"add Jive BinaryProvider CEnum"'
         - julia --color=yes -e 'using Pkg; pkg"precompile"'
       script:
         - cd test
         - julia --color=yes runtests.jl
+
+before_script:
+  - julia --color=yes --project=. -e 'using Pkg; Pkg.build()'
 
 script:
   - julia --color=yes --project=. -e 'using Pkg; Pkg.test()'
