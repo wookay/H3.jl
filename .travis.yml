@@ -1,0 +1,36 @@
+# Documentation: http://docs.travis-ci.com/user/languages/julia/
+notifications:
+  email: false
+
+language: julia
+
+julia:
+  - 1.1
+
+matrix:
+  exclude:
+    - os: windows
+      language: julia
+
+  include:
+    - os: osx
+    - os: linux
+    - os: windows
+      language: sh
+      before_install:
+        - choco install julia
+        - julia --color=yes -e 'using InteractiveUtils; versioninfo(verbose=true)'
+        - julia --color=yes -e 'using Pkg; pkg"dev ."'
+        - julia --color=yes -e 'using Pkg; pkg"precompile"'
+      script:
+        - cd test
+        - julia --color=yes runtests.jl
+
+script:
+  - julia --color=yes --project=. -e 'using Pkg; Pkg.test()'
+
+after_success:
+  - if [[ "$TRAVIS_OS_NAME" == linux && "$TRAVIS_JULIA_VERSION" == 1.1 ]] ; then julia --project=. -e 'using Pkg;
+                                                                                                       Pkg.add("Coverage");
+                                                                                                       using Coverage;
+                                                                                                       Codecov.submit(process_folder())' ; fi
