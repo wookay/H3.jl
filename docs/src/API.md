@@ -1,7 +1,7 @@
 # H3.API
 
 !!! note
-    most of the documents take from
+    the documents taken from
     - [https://github.com/uber/h3/tree/master/docs/api](https://github.com/uber/h3/tree/master/docs/api)
     - [https://github.com/uber/h3/blob/master/src/h3lib/include/h3api.h.in](https://github.com/uber/h3/blob/master/src/h3lib/include/h3api.h.in)
 
@@ -45,4 +45,35 @@ h3LineSize
 h3Distance
 experimentalH3ToLocalIj
 experimentalLocalIjToH3
+```
+
+### Hierarchical grid functions
+```@docs
+h3ToParent
+h3ToChildren
+maxH3ToChildrenSize
+compact
+uncompact
+maxUncompactSize
+```
+
+### Region functions
+```@docs
+polyfill
+maxPolyfillSize
+h3SetToLinkedGeo
+destroyLinkedPolygon
+```
+
+### Miscellaneous H3 functions
+```@docs
+degsToRads
+radsToDegs
+hexAreaKm2
+hexAreaM2
+edgeLengthKm
+edgeLengthM
+numHexagons
+getRes0Indexes
+res0IndexCount
 ```

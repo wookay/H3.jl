@@ -12,13 +12,22 @@ export h3GetResolution, h3GetBaseCell, stringToH3, h3ToString, h3IsValid, h3IsRe
 # Grid traversal functions
 export kRing, maxKringSize, kRingDistances, hexRange, hexRangeDistances, hexRanges, hexRing, h3Line, h3LineSize, h3Distance, experimentalH3ToLocalIj, experimentalLocalIjToH3
 
+# Hierarchical grid functions
+export h3ToParent, h3ToChildren, maxH3ToChildrenSize, compact, uncompact, maxUncompactSize
+
+# Region functions
+export polyfill, maxPolyfillSize, h3SetToLinkedGeo, destroyLinkedPolygon
+
+# Miscellaneous H3 functions
+export degsToRads, radsToDegs, hexAreaKm2, hexAreaM2, edgeLengthKm, edgeLengthM, numHexagons, getRes0Indexes, res0IndexCount
+
 
 using ..Lib
-using .Lib: H3Index, GeoCoord, GeoBoundary, CoordIJ
+using .Lib: H3Index, GeoCoord, GeoBoundary, CoordIJ, GeoPolygon, LinkedGeoPolygon
 
 ###
 #
-# * most of the documents take from
+# * the documents taken from
 #   - https://github.com/uber/h3/tree/master/docs/api
 #   - https://github.com/uber/h3/blob/master/src/h3lib/include/h3api.h.in
 #
@@ -76,16 +85,16 @@ function h3ToGeo(h::H3Index)::GeoCoord
 end
 
 """
-    h3ToGeoBoundary(h::H3Index)::GeoBoundary
+    h3ToGeoBoundary(h::H3Index)::Vector{GeoCoord}
 
 Finds the boundary of the index.
 """
-function h3ToGeoBoundary(h::H3Index)::GeoBoundary
+function h3ToGeoBoundary(h::H3Index)::Vector{GeoCoord}
     refboundary = Ref{GeoBoundary}()
     Lib.h3ToGeoBoundary(h, refboundary)
     numVerts = refboundary[].numVerts
     verts = refboundary[].verts[1:numVerts]
-    GeoBoundary(numVerts, NTuple{10, GeoCoord}((verts..., ntuple(x->GeoCoord(0, 0), 10-numVerts)...)))
+    collect(verts)
 end
 
 
@@ -292,6 +301,202 @@ function experimentalLocalIjToH3(origin::H3Index, ij::CoordIJ)::H3Index
     refh = Ref{H3Index}()
     Lib.experimentalLocalIjToH3(origin, Ref(ij), refh)
     refh[]
+end
+
+
+# Hierarchical grid functions
+
+"""
+    h3ToParent(h::H3Index, parentRes::Integer)::H3Index
+
+Returns the parent (coarser) index containing h.
+"""
+function h3ToParent(h::H3Index, parentRes::Integer)::H3Index
+    Lib.h3ToParent(h, parentRes)
+end
+
+"""
+    h3ToChildren(h::H3Index, childRes::Integer)::Vector{H3Index}
+
+Populates children with the indexes contained by h at resolution childRes. children must be an array of at least size maxH3ToChildrenSize(h, childRes).
+"""
+function h3ToChildren(h::H3Index, childRes::Integer)::Vector{H3Index}
+    children_size = Lib.maxH3ToChildrenSize(h, childRes)
+    children = Vector{H3Index}(undef, children_size)
+    Lib.h3ToChildren(h, childRes, children)
+    children
+end
+
+"""
+    maxH3ToChildrenSize(h::H3Index, childRes::Integer)::Int
+
+Returns the size of the array needed by h3ToChildren for these inputs.
+"""
+function maxH3ToChildrenSize(h::H3Index, childRes::Integer)::Int
+    Lib.maxH3ToChildrenSize(h, childRes)
+end
+
+"""
+    compact(h3Set::Vector{H3Index})::Vector{H3Index}
+
+Compacts the set h3Set of indexes as best as possible, into the array compactedSet. compactedSet must be at least the size of h3Set in case the set cannot be compacted.
+"""
+function compact(h3Set::Vector{H3Index})::Vector{H3Index}
+    numHexes = length(h3Set)
+    compactedSet = Vector{H3Index}(undef, numHexes)
+    Lib.compact(h3Set, compactedSet, numHexes)
+    compactedSet
+end
+
+"""
+    uncompact(compactedSet::Vector{H3Index}, res::Int)::Vector{H3Index}
+
+Uncompacts the set compactedSet of indexes to the resolution res.
+"""
+function uncompact(compactedSet::Vector{H3Index}, res::Int)::Vector{H3Index}
+    hexCount = length(compactedSet)
+    maxHexes = Lib.maxUncompactSize(compactedSet, hexCount, res)
+    h3Set = Vector{H3Index}(undef, maxHexes)
+    Lib.uncompact(compactedSet, hexCount, h3Set, maxHexes, res)
+    h3Set
+end
+
+"""
+    maxUncompactSize(compactedSet::Vector{H3Index}, res::Int)::Int
+
+Returns the size of the array needed by uncompact.
+"""
+function maxUncompactSize(compactedSet::Vector{H3Index}, res::Int)::Int
+    hexCount = length(compactedSet)
+    Lib.maxUncompactSize(compactedSet, hexCount, res)
+end
+
+
+# Region functions
+
+"""
+    polyfill(geoPolygon::GeoPolygon, res::Int)::Vector{H3Index}
+"""
+function polyfill(geoPolygon::GeoPolygon, res::Int)::Vector{H3Index}
+    numHexagons = Lib.maxPolyfillSize(Ref(geoPolygon), res)
+    out = Vector{H3Index}(undef, numHexagons)
+    Lib.polyfill(Ref(geoPolygon), res, out)
+    out
+end
+
+"""
+    maxPolyfillSize(geoPolygon::GeoPolygon, res::Int)::Int
+
+maxPolyfillSize returns the number of hexagons to allocate space for when performing a polyfill on the given GeoJSON-like data structure.
+"""
+function maxPolyfillSize(geoPolygon::GeoPolygon, res::Int)::Int
+    Lib.maxPolyfillSize(Ref(geoPolygon), res)
+end
+
+"""
+    h3SetToLinkedGeo(h3Set::Vector{H3Index})::Ref{LinkedGeoPolygon}
+
+Create a LinkedGeoPolygon describing the outline(s) of a set of hexagons. Polygon outlines will follow GeoJSON MultiPolygon order: Each polygon will have one outer loop, which is first in the list, followed by any holes.
+"""
+function h3SetToLinkedGeo(h3Set::Vector{H3Index})::Ref{LinkedGeoPolygon}
+    refpolygon = Ref{LinkedGeoPolygon}(LinkedGeoPolygon(C_NULL,C_NULL,C_NULL))
+    Lib.h3SetToLinkedGeo(C_NULL, 0, refpolygon)
+    refpolygon
+end
+
+"""
+    destroyLinkedPolygon(polygon::Ref{LinkedGeoPolygon})
+
+Free all allocated memory for a linked geo structure. The caller is responsible for freeing memory allocated to the input polygon struct.
+"""
+function destroyLinkedPolygon(refpolygon::Ref{LinkedGeoPolygon})
+    Lib.destroyLinkedPolygon(refpolygon)
+end
+
+
+# Miscellaneous H3 functions
+
+"""
+    degsToRads(degrees::Union{Cdouble,Integer})::Cdouble
+
+Converts degrees to radians.
+"""
+function degsToRads(degrees::Union{Cdouble,Integer})::Cdouble
+    Lib.degsToRads(degrees)
+end
+
+"""
+    radsToDegs(radians::Union{Cdouble,Integer})::Cdouble
+
+Converts radians to degrees.
+"""
+function radsToDegs(radians::Union{Cdouble,Integer})::Cdouble
+    Lib.radsToDegs(radians)
+end
+
+"""
+    hexAreaKm2(res::Integer)::Cdouble
+
+Average hexagon area in square kilometers at the given resolution.
+"""
+function hexAreaKm2(res::Integer)::Cdouble
+    Lib.hexAreaKm2(res)
+end
+
+"""
+    hexAreaM2(res::Integer)::Cdouble
+
+Average hexagon area in square meters at the given resolution.
+"""
+function hexAreaM2(res::Integer)::Cdouble
+    Lib.hexAreaM2(res)
+end
+
+"""
+    edgeLengthKm(res::Integer)::Cdouble
+
+Average hexagon edge length in kilometers at the given resolution.
+"""
+function edgeLengthKm(res::Integer)::Cdouble
+    Lib.edgeLengthKm(res)
+end
+
+"""
+    edgeLengthM(res::Integer)::Cdouble
+
+Average hexagon edge length in meters at the given resolution.
+"""
+function edgeLengthM(res::Integer)::Cdouble
+    Lib.edgeLengthM(res)
+end
+
+"""
+    numHexagons(res::Integer)::Int64
+
+Number of unique H3 indexes at the given resolution.
+"""
+function numHexagons(res::Integer)::Int64
+    Lib.numHexagons(res)
+end
+
+"""
+    getRes0Indexes()::Vector{H3Index}
+
+All the resolution 0 H3 indexes.
+"""
+function getRes0Indexes()::Vector{H3Index}
+    out = Vector{H3Index}(undef, Lib.res0IndexCount() * sizeof(H3Index))
+    Lib.getRes0Indexes(out)
+    out
+end
+
+"""
+    res0IndexCount()::Cint
+
+Number of resolution 0 H3 indexes.
+"""
+function res0IndexCount()::Int
+    Lib.res0IndexCount()
 end
 
 end # module H3.API
