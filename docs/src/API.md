@@ -9,7 +9,6 @@
 ```@docs
 H3Index
 GeoCoord
-GeoBoundary
 CoordIJ
 ```
 

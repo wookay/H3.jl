@@ -1,7 +1,7 @@
 module API # module H3
 
 # types
-export H3Index, GeoCoord, GeoBoundary, CoordIJ
+export H3Index, GeoCoord, CoordIJ
 
 # Indexing functions
 export geoToH3, h3ToGeo, h3ToGeoBoundary
@@ -52,16 +52,6 @@ H3Index
 latitude/longitude in radians
 """
 GeoCoord
-
-"""
-    struct GeoBoundary
-        numVerts::Cint
-        verts::NTuple{10, GeoCoord}
-    end
-
-cell boundary in latitude/longitude
-"""
-GeoBoundary
 
 """
     struct CoordIJ
