@@ -6,7 +6,7 @@ makedocs(
     modules = [API],
     clean = false,
     format = Documenter.HTML(prettyurls = !("local" in ARGS)),
-    sitename = "H3.jl 👣",
+    sitename = "H3.jl ⬡",
     authors = "WooKyoung Noh",
     pages = Any[
         "Home" => "index.md",
