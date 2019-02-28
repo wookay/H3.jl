@@ -1,7 +1,7 @@
 module test_h3_api_unidirectional_edges
 
 using Test
-using H3.API # h3IndexesAreNeighbors getH3UnidirectionalEdge h3UnidirectionalEdgeIsValid getOriginH3IndexFromUnidirectionalEdge getDestinationH3IndexFromUnidirectionalEdge getH3IndexesFromUnidirectionalEdge getH3UnidirectionalEdgesFromHexagon getH3UnidirectionalEdgeBoundary
+using H3.API # h3IndexesAreNeighbors getH3UnidirectionalEdge h3UnidirectionalEdgeIsValid getOriginH3IndexFromUnidirectionalEdge getDestinationH3IndexFromUnidirectionalEdge getH3IndexesFromUnidirectionalEdge getH3UnidirectionalEdgesFromHexagon getH3UnidirectionalEdgeBoundary ≈
 
 sfGeo = GeoCoord(0.659966917655, -2.1364398519396)
 sf = geoToH3(sfGeo, 9)
@@ -26,6 +26,6 @@ edges = getH3UnidirectionalEdgesFromHexagon(sf)
 @test edges == [0x119283080dcbffff, 0x129283080dcbffff, 0x139283080dcbffff, 0x149283080dcbffff, 0x159283080dcbffff, 0x169283080dcbffff]
 
 edgeBoundary = getH3UnidirectionalEdgeBoundary(edges[1])
-@test edgeBoundary == [GeoCoord(0.6600077078134922, -2.1364818365456384), GeoCoord(0.6599783466210994, -2.136500544207272)]
+@test edgeBoundary ≈ [GeoCoord(0.6600077078134922, -2.1364818365456384), GeoCoord(0.6599783466210994, -2.136500544207272)]
 
 end # module test_h3_api_unidirectional_edges

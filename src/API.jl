@@ -596,4 +596,29 @@ function res0IndexCount()::Int
     Lib.res0IndexCount()
 end
 
+
+### ≈
+
+function Base.isapprox(A::Vector{GeoCoord}, B::Vector{GeoCoord})
+    A === B && return true
+    axes(A) != axes(B) && return false
+    for (a, b) in zip(A, B)
+        if !(isapprox(a.lat, b.lat) && isapprox(a.lon, b.lon))
+            return false
+        end
+    end
+    return true
+end
+
+function Base.isapprox(A::Vector{Tuple{Float64,Float64}}, B::Vector{Tuple{Float64,Float64}})
+    A === B && return true
+    axes(A) != axes(B) && return false
+    for (a, b) in zip(A, B)
+        if !(isapprox(a[1], b[1]) && isapprox(a[2], b[2]))
+            return false
+        end
+    end
+    return true
+end
+
 end # module H3.API

@@ -1,29 +1,7 @@
 module test_h3_api_indexing
 
 using Test
-using H3.API # geoToH3 h3ToGeo h3ToGeoBoundary GeoCoord GeoBoundary
-
-function Base.isapprox(A::Vector{GeoCoord}, B::Vector{GeoCoord})
-    A === B && return true
-    axes(A) != axes(B) && return false
-    for (a, b) in zip(A, B)
-        if !(isapprox(a.lat, b.lat) && isapprox(a.lon, b.lon))
-            return false
-        end
-    end
-    return true
-end
-
-function Base.isapprox(A::Vector{Tuple{Float64,Float64}}, B::Vector{Tuple{Float64,Float64}})
-    A === B && return true
-    axes(A) != axes(B) && return false
-    for (a, b) in zip(A, B)
-        if !(isapprox(a[1], b[1]) && isapprox(a[2], b[2]))
-            return false
-        end
-    end
-    return true
-end
+using H3.API # geoToH3 h3ToGeo h3ToGeoBoundary GeoCoord GeoBoundary ≈
 
 location = GeoCoord(0.6518070561696664, -2.128889370371519)
 @test geoToH3(location, 1) == 0x081283ffffffffff
