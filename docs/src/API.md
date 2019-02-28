@@ -65,6 +65,18 @@ h3SetToLinkedGeo
 destroyLinkedPolygon
 ```
 
+### Unidirectional edge functions
+```@docs
+h3IndexesAreNeighbors
+getH3UnidirectionalEdge
+h3UnidirectionalEdgeIsValid
+getOriginH3IndexFromUnidirectionalEdge
+getDestinationH3IndexFromUnidirectionalEdge
+getH3IndexesFromUnidirectionalEdge
+getH3UnidirectionalEdgesFromHexagon
+getH3UnidirectionalEdgeBoundary
+```
+
 ### Miscellaneous H3 functions
 ```@docs
 degsToRads

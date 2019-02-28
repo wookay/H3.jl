@@ -18,6 +18,9 @@ export h3ToParent, h3ToChildren, maxH3ToChildrenSize, compact, uncompact, maxUnc
 # Region functions
 export polyfill, maxPolyfillSize, h3SetToLinkedGeo, destroyLinkedPolygon
 
+# Unidirectional edge functions
+export h3IndexesAreNeighbors, getH3UnidirectionalEdge, h3UnidirectionalEdgeIsValid, getOriginH3IndexFromUnidirectionalEdge, getDestinationH3IndexFromUnidirectionalEdge, getH3IndexesFromUnidirectionalEdge, getH3UnidirectionalEdgesFromHexagon, getH3UnidirectionalEdgeBoundary
+
 # Miscellaneous H3 functions
 export degsToRads, radsToDegs, hexAreaKm2, hexAreaM2, edgeLengthKm, edgeLengthM, numHexagons, getRes0Indexes, res0IndexCount
 
@@ -34,28 +37,37 @@ using .Lib: H3Index, GeoCoord, GeoBoundary, CoordIJ, GeoPolygon, LinkedGeoPolygo
 ###
 
 """
-    H3Index
+    const H3Index = UInt64
 
 the H3Index fits within a 64-bit unsigned integer
 """
 H3Index
 
 """
-    GeoCoord
+    struct GeoCoord
+        lat::Cdouble
+        lon::Cdouble
+    end
 
 latitude/longitude in radians
 """
 GeoCoord
 
 """
-    GeoBoundary
+    struct GeoBoundary
+        numVerts::Cint
+        verts::NTuple{10, GeoCoord}
+    end
 
 cell boundary in latitude/longitude
 """
 GeoBoundary
 
 """
-    CoordIJ
+    struct CoordIJ
+        i::Cint
+        j::Cint
+    end
 
 IJ hexagon coordinates
 """
@@ -411,6 +423,91 @@ Free all allocated memory for a linked geo structure. The caller is responsible 
 """
 function destroyLinkedPolygon(refpolygon::Ref{LinkedGeoPolygon})
     Lib.destroyLinkedPolygon(refpolygon)
+end
+
+
+# Unidirectional edge functions
+
+"""
+    h3IndexesAreNeighbors(origin::H3Index, destination::H3Index)::Bool
+
+Returns whether or not the provided H3Indexes are neighbors.
+Returns `true` if the indexes are neighbors, `false` otherwise.
+"""
+function h3IndexesAreNeighbors(origin::H3Index, destination::H3Index)::Bool
+    Bool(Lib.h3IndexesAreNeighbors(origin, destination))
+end
+
+"""
+    getH3UnidirectionalEdge(origin::H3Index, destination::H3Index)::H3Index
+
+Returns a unidirectional edge H3 index based on the provided origin and destination.
+"""
+function getH3UnidirectionalEdge(origin::H3Index, destination::H3Index)::H3Index
+    Lib.getH3UnidirectionalEdge(origin, destination)
+end
+
+"""
+    h3UnidirectionalEdgeIsValid(edge::H3Index)::Bool
+
+Determines if the provided H3Index is a valid unidirectional edge index.
+Returns `true` if it is a unidirectional edge H3Index, otherwise `false`.
+"""
+function h3UnidirectionalEdgeIsValid(edge::H3Index)::Bool
+    Bool(Lib.h3UnidirectionalEdgeIsValid(edge))
+end
+
+"""
+    getOriginH3IndexFromUnidirectionalEdge(edge::H3Index)::H3Index
+
+Returns the origin hexagon from the unidirectional edge H3Index.
+"""
+function getOriginH3IndexFromUnidirectionalEdge(edge::H3Index)::H3Index
+    Lib.getOriginH3IndexFromUnidirectionalEdge(edge)
+end
+
+"""
+    getDestinationH3IndexFromUnidirectionalEdge(edge::H3Index)::H3Index
+
+Returns the destination hexagon from the unidirectional edge H3Index.
+"""
+function getDestinationH3IndexFromUnidirectionalEdge(edge::H3Index)::H3Index
+    Lib.getDestinationH3IndexFromUnidirectionalEdge(edge)
+end
+
+"""
+    getH3IndexesFromUnidirectionalEdge(edge::H3Index)::Tuple{H3Index, H3Index}
+
+Returns the origin, destination pair of hexagon IDs for the given edge ID, which are placed at originDestination[0] and originDestination[1] respectively.
+"""
+function getH3IndexesFromUnidirectionalEdge(edge::H3Index)::Tuple{H3Index, H3Index}
+    originDestination = Vector{H3Index}(undef, 2)
+    Lib.getH3IndexesFromUnidirectionalEdge(edge, originDestination)
+    tuple(originDestination...)
+end
+
+"""
+    getH3UnidirectionalEdgesFromHexagon(origin::H3Index)::Vector{H3Index}
+
+Provides all of the unidirectional edges from the current H3Index. edges must be of length 6, and the number of undirectional edges placed in the array may be less than 6.
+"""
+function getH3UnidirectionalEdgesFromHexagon(origin::H3Index)::Vector{H3Index}
+    edges = Vector{H3Index}(undef, 6)
+    Lib.getH3UnidirectionalEdgesFromHexagon(origin, edges)
+    edges
+end
+
+"""
+    getH3UnidirectionalEdgeBoundary(edge::H3Index)::Vector{GeoCoord}
+
+Provides the coordinates defining the unidirectional edge.
+"""
+function getH3UnidirectionalEdgeBoundary(edge::H3Index)::Vector{GeoCoord}
+    refboundary = Ref{GeoBoundary}()
+    Lib.getH3UnidirectionalEdgeBoundary(edge, refboundary)
+    numVerts = refboundary[].numVerts
+    verts = refboundary[].verts[1:numVerts]
+    collect(verts)
 end
 
 
