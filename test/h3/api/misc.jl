@@ -11,12 +11,16 @@ using H3.API # degsToRads radsToDegs hexAreaKm2 hexAreaM2 edgeLengthKm edgeLengt
 
 @test hexAreaM2(1) == 6.07221e11
 
+@test edgeLengthKm(0) == 1107.712591
 @test edgeLengthKm(1) == 418.6760055
 
+@test edgeLengthM(0) == 1107712.591
 @test edgeLengthM(1) == 418676.0055
 
 @test numHexagons(0) == 122
 @test numHexagons(1) == 842
+@test numHexagons(5) == 2_016_842
+@test numHexagons(15) == 569_707_381_193_162
 
 @test length(getRes0Indexes()) == 122 * 8
 

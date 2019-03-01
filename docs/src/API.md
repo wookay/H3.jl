@@ -5,14 +5,14 @@
     - [https://github.com/uber/h3/tree/master/docs/api](https://github.com/uber/h3/tree/master/docs/api)
     - [https://github.com/uber/h3/blob/master/src/h3lib/include/h3api.h.in](https://github.com/uber/h3/blob/master/src/h3lib/include/h3api.h.in)
 
-### Indexing functions
+# Indexing functions
 ```@docs
 geoToH3
 h3ToGeo
 h3ToGeoBoundary
 ```
 
-### Index inspection functions
+# Index inspection functions
 ```@docs
 h3GetResolution
 h3GetBaseCell
@@ -23,7 +23,7 @@ h3IsResClassIII
 h3IsPentagon
 ```
 
-### Grid traversal functions
+# Grid traversal functions
 ```@docs
 kRing
 maxKringSize
@@ -39,7 +39,7 @@ experimentalH3ToLocalIj
 experimentalLocalIjToH3
 ```
 
-### Hierarchical grid functions
+# Hierarchical grid functions
 ```@docs
 h3ToParent
 h3ToChildren
@@ -49,7 +49,7 @@ uncompact
 maxUncompactSize
 ```
 
-### Region functions
+# Region functions
 ```@docs
 polyfill
 maxPolyfillSize
@@ -57,7 +57,7 @@ h3SetToLinkedGeo
 destroyLinkedPolygon
 ```
 
-### Unidirectional edge functions
+# Unidirectional edge functions
 ```@docs
 h3IndexesAreNeighbors
 getH3UnidirectionalEdge
@@ -69,7 +69,7 @@ getH3UnidirectionalEdgesFromHexagon
 getH3UnidirectionalEdgeBoundary
 ```
 
-### Miscellaneous H3 functions
+# Miscellaneous H3 functions
 ```@docs
 degsToRads
 radsToDegs
@@ -82,12 +82,18 @@ getRes0Indexes
 res0IndexCount
 ```
 
-### Coordinate Systems
+# Coordinate Systems
 ```@docs
+ijToIjk
 ijkToHex2d
-hex2dToCoordIJK
+ijkToIj
+ijkDistance
+ijkNormalize
+h3ToLocalIjk
 h3ToFaceIjk
+localIjkToH3
+faceIjkToH3
+hex2dToCoordIJK
 geoToVec3d
 geoToFaceIjk
-ijkNormalize
 ```

@@ -5,7 +5,7 @@
     - [https://github.com/uber/h3/tree/master/docs/api](https://github.com/uber/h3/tree/master/docs/api)
     - [https://github.com/uber/h3/blob/master/src/h3lib/include/h3api.h.in](https://github.com/uber/h3/blob/master/src/h3lib/include/h3api.h.in)
 
-### Types
+# Types
 ```@docs
 Lib.H3Index
 Lib.GeoCoord

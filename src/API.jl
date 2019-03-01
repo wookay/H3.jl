@@ -25,7 +25,7 @@ export h3IndexesAreNeighbors, getH3UnidirectionalEdge, h3UnidirectionalEdgeIsVal
 export degsToRads, radsToDegs, hexAreaKm2, hexAreaM2, edgeLengthKm, edgeLengthM, numHexagons, getRes0Indexes, res0IndexCount
 
 # Coordinate Systems
-export ijkToHex2d, hex2dToCoordIJK, h3ToFaceIjk, geoToVec3d, geoToFaceIjk, ijkNormalize
+export ijToIjk, ijkToHex2d, ijkToIj, ijkDistance, ijkNormalize, h3ToLocalIjk, h3ToFaceIjk, localIjkToH3, faceIjkToH3, hex2dToCoordIJK, geoToVec3d, geoToFaceIjk
 
 
 using ..Lib
@@ -567,6 +567,17 @@ end
 ### Coordinate Systems
 
 """
+    ijToIjk(c::CoordIJ)::CoordIJK
+
+Transforms coordinates from the IJ coordinate system to the IJK+ coordinate system.
+"""
+function ijToIjk(c::CoordIJ)::CoordIJK
+    ref = Ref{CoordIJK}()
+    ccall((:ijToIjk, Lib.libh3), Cvoid, (Ptr{CoordIJ}, Ptr{CoordIJK}), Ref(c), ref)
+    ref[]
+end
+
+"""
     ijkToHex2d(c::CoordIJK)::Vec2d
 
 Find the center point in 2D cartesian coordinates of a hex.
@@ -578,14 +589,23 @@ function ijkToHex2d(c::CoordIJK)::Vec2d
 end
 
 """
-    hex2dToCoordIJK(v::Vec2d)::CoordIJK
+    ijkToIj(c::CoordIJK)::CoordIJ
 
-Determine the containing hex in ijk+ coordinates for a 2D cartesian coordinate vector (from DGGRID).
+Transforms coordinates from the IJK+ coordinate system to the IJ coordinate system.
 """
-function hex2dToCoordIJK(v::Vec2d)::CoordIJK
-    ref = Ref{CoordIJK}()
-    ccall((:_hex2dToCoordIJK, Lib.libh3), Cvoid, (Ptr{Vec2d}, Ptr{CoordIJK}), Ref(v), ref)
+function ijkToIj(c::CoordIJK)::CoordIJ
+    ref = Ref{CoordIJ}()
+    ccall((:ijkToIj, Lib.libh3), Cvoid, (Ptr{CoordIJK}, Ptr{CoordIJ}), Ref(c), ref)
     ref[]
+end
+
+"""
+    ijkDistance(c1::CoordIJK, c2::CoordIJK)::Int
+
+Finds the distance between the two coordinates. Returns result.
+"""
+function ijkDistance(c1::CoordIJK, c2::CoordIJK)::Int
+    ccall((:ijkDistance, Lib.libh3), Cint, (Ptr{CoordIJK}, Ptr{CoordIJK}), Ref(c1), Ref(c2))
 end
 
 """
@@ -600,6 +620,20 @@ function ijkNormalize(c::CoordIJK)::CoordIJK
 end
 
 """
+    h3ToLocalIjk(origin::H3Index, h3::H3Index)::CoordIJK
+
+Produces ijk+ coordinates for an index anchored by an origin.
+The coordinate space used by this function may have deleted regions or warping due to pentagonal distortion.
+Coordinates are only comparable if they come from the same origin index.
+Failure may occur if the index is too far away from the origin or if the index is on the other side of a pentagon.
+"""
+function h3ToLocalIjk(origin::H3Index, h3::H3Index)::CoordIJK
+    ref = Ref{CoordIJK}()
+    ccall((:h3ToLocalIjk, Lib.libh3), Cint, (H3Index, H3Index, Ptr{CoordIJK}), origin, h3, ref)
+    ref[]
+end
+
+"""
     h3ToFaceIjk(h::H3Index)::FaceIJK
 
 Convert an H3Index to a FaceIJK address.
@@ -607,6 +641,39 @@ Convert an H3Index to a FaceIJK address.
 function h3ToFaceIjk(h::H3Index)::FaceIJK
     ref = Ref{FaceIJK}()
     ccall((:_h3ToFaceIjk, Lib.libh3), Cvoid, (H3Index, Ptr{FaceIJK}), h, ref)
+    ref[]
+end
+
+"""
+    localIjkToH3(origin::H3Index, ijk::CoordIJK)::H3Index
+
+Produces an index for ijk+ coordinates anchored by an origin.
+The coordinate space used by this function may have deleted regions or warping due to pentagonal distortion.
+Failure may occur if the coordinates are too far away from the origin or if the index is on the other side of a pentagon.
+"""
+function localIjkToH3(origin::H3Index, ijk::CoordIJK)::H3Index
+    ref = Ref{H3Index}()
+    ccall((:localIjkToH3, Lib.libh3), Cint, (H3Index, Ptr{CoordIJK}, Ptr{H3Index}), origin, Ref(ijk), ref)
+    ref[]
+end
+
+"""
+    faceIjkToH3(faceijk::FaceIJK, res::Int)::H3Index
+
+Convert an FaceIJK address to the corresponding H3Index.
+"""
+function faceIjkToH3(faceijk::FaceIJK, res::Int)::H3Index
+    ccall((:_faceIjkToH3, Lib.libh3), H3Index, (Ptr{FaceIJK}, Cint), Ref(faceijk), res)
+end
+
+"""
+    hex2dToCoordIJK(v::Vec2d)::CoordIJK
+
+Determine the containing hex in ijk+ coordinates for a 2D cartesian coordinate vector (from DGGRID).
+"""
+function hex2dToCoordIJK(v::Vec2d)::CoordIJK
+    ref = Ref{CoordIJK}()
+    ccall((:_hex2dToCoordIJK, Lib.libh3), Cvoid, (Ptr{Vec2d}, Ptr{CoordIJK}), Ref(v), ref)
     ref[]
 end
 
