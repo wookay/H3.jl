@@ -7,7 +7,7 @@ include("../gen/libh3_functions.jl")
 
 ###
 #
-# * the documents taken from
+# * the descriptions are taken from
 #   - https://github.com/uber/h3/tree/master/docs/api
 #   - https://github.com/uber/h3/blob/master/src/h3lib/include/h3api.h.in
 #
