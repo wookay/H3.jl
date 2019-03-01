@@ -1,7 +1,7 @@
 module API # module H3
 
 # types
-export H3Index, GeoCoord, CoordIJ
+export H3Index, GeoCoord, CoordIJ, Vec2d, Vec3d, CoordIJK, FaceIJK
 
 # Indexing functions
 export geoToH3, h3ToGeo, h3ToGeoBoundary
@@ -24,9 +24,13 @@ export h3IndexesAreNeighbors, getH3UnidirectionalEdge, h3UnidirectionalEdgeIsVal
 # Miscellaneous H3 functions
 export degsToRads, radsToDegs, hexAreaKm2, hexAreaM2, edgeLengthKm, edgeLengthM, numHexagons, getRes0Indexes, res0IndexCount
 
+# Coordinate Systems
+export ijkToHex2d, hex2dToCoordIJK, h3ToFaceIjk, geoToVec3d, geoToFaceIjk, ijkNormalize
+
 
 using ..Lib
 using .Lib: H3Index, GeoCoord, GeoBoundary, CoordIJ, GeoPolygon, LinkedGeoPolygon
+using .Lib: Vec2d, Vec3d, CoordIJK, FaceIJK
 
 ###
 #
@@ -35,33 +39,6 @@ using .Lib: H3Index, GeoCoord, GeoBoundary, CoordIJ, GeoPolygon, LinkedGeoPolygo
 #   - https://github.com/uber/h3/blob/master/src/h3lib/include/h3api.h.in
 #
 ###
-
-"""
-    const H3Index = UInt64
-
-the H3Index fits within a 64-bit unsigned integer
-"""
-H3Index
-
-"""
-    struct GeoCoord
-        lat::Cdouble
-        lon::Cdouble
-    end
-
-latitude/longitude in radians
-"""
-GeoCoord
-
-"""
-    struct CoordIJ
-        i::Cint
-        j::Cint
-    end
-
-IJ hexagon coordinates
-"""
-CoordIJ
 
 
 # Indexing functions
@@ -584,6 +561,75 @@ Number of resolution 0 H3 indexes.
 """
 function res0IndexCount()::Int
     Lib.res0IndexCount()
+end
+
+
+### Coordinate Systems
+
+"""
+    ijkToHex2d(c::CoordIJK)::Vec2d
+
+Find the center point in 2D cartesian coordinates of a hex.
+"""
+function ijkToHex2d(c::CoordIJK)::Vec2d
+    ref = Ref{Vec2d}()
+    ccall((:_ijkToHex2d, Lib.libh3), Cvoid, (Ptr{CoordIJK}, Ptr{Vec2d}), Ref(c), ref)
+    ref[]
+end
+
+"""
+    hex2dToCoordIJK(v::Vec2d)::CoordIJK
+
+Determine the containing hex in ijk+ coordinates for a 2D cartesian coordinate vector (from DGGRID).
+"""
+function hex2dToCoordIJK(v::Vec2d)::CoordIJK
+    ref = Ref{CoordIJK}()
+    ccall((:_hex2dToCoordIJK, Lib.libh3), Cvoid, (Ptr{Vec2d}, Ptr{CoordIJK}), Ref(v), ref)
+    ref[]
+end
+
+"""
+    ijkNormalize(c::CoordIJK)::CoordIJK
+
+Normalizes ijk coordinates by setting the components to the smallest possible values. Works in place.
+"""
+function ijkNormalize(c::CoordIJK)::CoordIJK
+    ref = Ref(c)
+    ccall((:_ijkNormalize, Lib.libh3), Cvoid, (Ptr{CoordIJK},), ref)
+    ref[]
+end
+
+"""
+    h3ToFaceIjk(h::H3Index)::FaceIJK
+
+Convert an H3Index to a FaceIJK address.
+"""
+function h3ToFaceIjk(h::H3Index)::FaceIJK
+    ref = Ref{FaceIJK}()
+    ccall((:_h3ToFaceIjk, Lib.libh3), Cvoid, (H3Index, Ptr{FaceIJK}), h, ref)
+    ref[]
+end
+
+"""
+    geoToVec3d(geo::GeoCoord)::Vec3d
+
+Calculate the 3D coordinate on unit sphere from the latitude and longitude.
+"""
+function geoToVec3d(geo::GeoCoord)::Vec3d
+    ref = Ref{Vec3d}()
+    ccall((:_geoToVec3d, Lib.libh3), Cvoid, (Ptr{GeoCoord}, Ptr{Vec3d}), Ref(geo), ref)
+    ref[]
+end
+
+"""
+    geoToFaceIjk(geo::GeoCoord, res::Int)::FaceIJK
+
+Encodes a coordinate on the sphere to the FaceIJK address of the containing cell at the specified resolution.
+"""
+function geoToFaceIjk(geo::GeoCoord, res::Int)::FaceIJK
+    ref = Ref{FaceIJK}()
+    ccall((:_geoToFaceIjk, Lib.libh3), Cvoid, (Ptr{GeoCoord}, Cint, Ptr{FaceIJK}), Ref(geo), res, ref)
+    ref[]
 end
 
 

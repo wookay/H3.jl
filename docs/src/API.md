@@ -5,13 +5,6 @@
     - [https://github.com/uber/h3/tree/master/docs/api](https://github.com/uber/h3/tree/master/docs/api)
     - [https://github.com/uber/h3/blob/master/src/h3lib/include/h3api.h.in](https://github.com/uber/h3/blob/master/src/h3lib/include/h3api.h.in)
 
-### Types
-```@docs
-H3Index
-GeoCoord
-CoordIJ
-```
-
 ### Indexing functions
 ```@docs
 geoToH3
@@ -87,4 +80,14 @@ edgeLengthM
 numHexagons
 getRes0Indexes
 res0IndexCount
+```
+
+### Coordinate Systems
+```@docs
+ijkToHex2d
+hex2dToCoordIJK
+h3ToFaceIjk
+geoToVec3d
+geoToFaceIjk
+ijkNormalize
 ```

@@ -7,7 +7,7 @@ location = GeoCoord(0.6518070561696664, -2.128889370371519)
 @test geoToH3(location, 1) == 0x081283ffffffffff
 @test geoToH3(location, 10) == 0x08a2834700007fff
 
-@test h3ToGeo(0x85283473fffffff) == GeoCoord(0.6518070561696664, -2.128889370371519)
+@test h3ToGeo(0x85283473fffffff) == location
 
 verts = h3ToGeoBoundary(0x85283473fffffff)
 @test length(verts) == 6
