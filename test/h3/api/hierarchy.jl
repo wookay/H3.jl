@@ -4,11 +4,13 @@ using Test
 using H3.API # h3ToParent h3ToChildren maxH3ToChildrenSize compact uncompact maxUncompactSize
 
 res = 1
-step = 0
-sf = GeoCoord(0.659966917655, 2 * 3.14159 - 2.1364398519396)
+sf = GeoCoord(0.659966917655, 2pi - 2.1364398519396)
 child = geoToH3(sf, res)
-parent = h3ToParent(child, res - step)
-@test parent == 0x081283ffffffffff
+@test child == 0x081283ffffffffff
+@test h3GetResolution(child) == res
+
+parent = h3ToParent(child, res)
+@test parent == child
 
 sfHex8 = geoToH3(sf, 8)
 sfHex9s = h3ToChildren(sfHex8, 9)

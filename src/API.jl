@@ -15,21 +15,18 @@ export kRing, maxKringSize, kRingDistances, hexRange, hexRangeDistances, hexRang
 # Hierarchical grid functions
 export h3ToParent, h3ToChildren, maxH3ToChildrenSize, compact, uncompact, maxUncompactSize
 
-# Region functions
-export polyfill, maxPolyfillSize, h3SetToLinkedGeo, destroyLinkedPolygon
-
 # Unidirectional edge functions
 export h3IndexesAreNeighbors, getH3UnidirectionalEdge, h3UnidirectionalEdgeIsValid, getOriginH3IndexFromUnidirectionalEdge, getDestinationH3IndexFromUnidirectionalEdge, getH3IndexesFromUnidirectionalEdge, getH3UnidirectionalEdgesFromHexagon, getH3UnidirectionalEdgeBoundary
 
 # Miscellaneous H3 functions
-export degsToRads, radsToDegs, hexAreaKm2, hexAreaM2, edgeLengthKm, edgeLengthM, numHexagons, getRes0Indexes, res0IndexCount
+export hexAreaKm2, hexAreaM2, edgeLengthKm, edgeLengthM, numHexagons, getRes0Indexes, res0IndexCount
 
 # Coordinate Systems
 export ijToIjk, ijkToHex2d, ijkToIj, ijkDistance, ijkNormalize, h3ToLocalIjk, h3ToFaceIjk, localIjkToH3, faceIjkToH3, hex2dToCoordIJK, geoToVec3d, geoToFaceIjk
 
 
 using ..Lib
-using .Lib: H3Index, GeoCoord, GeoBoundary, CoordIJ, GeoPolygon, LinkedGeoPolygon
+using .Lib: H3Index, GeoCoord, GeoBoundary, CoordIJ
 using .Lib: Vec2d, Vec3d, CoordIJK, FaceIJK
 
 ###
@@ -286,20 +283,20 @@ end
 # Hierarchical grid functions
 
 """
-    h3ToParent(h::H3Index, parentRes::Integer)::H3Index
+    h3ToParent(h::H3Index, parentRes::Int)::H3Index
 
 Returns the parent (coarser) index containing h.
 """
-function h3ToParent(h::H3Index, parentRes::Integer)::H3Index
+function h3ToParent(h::H3Index, parentRes::Int)::H3Index
     Lib.h3ToParent(h, parentRes)
 end
 
 """
-    h3ToChildren(h::H3Index, childRes::Integer)::Vector{H3Index}
+    h3ToChildren(h::H3Index, childRes::Int)::Vector{H3Index}
 
 Populates children with the indexes contained by h at resolution childRes. children must be an array of at least size maxH3ToChildrenSize(h, childRes).
 """
-function h3ToChildren(h::H3Index, childRes::Integer)::Vector{H3Index}
+function h3ToChildren(h::H3Index, childRes::Int)::Vector{H3Index}
     children_size = Lib.maxH3ToChildrenSize(h, childRes)
     children = Vector{H3Index}(undef, children_size)
     Lib.h3ToChildren(h, childRes, children)
@@ -307,11 +304,11 @@ function h3ToChildren(h::H3Index, childRes::Integer)::Vector{H3Index}
 end
 
 """
-    maxH3ToChildrenSize(h::H3Index, childRes::Integer)::Int
+    maxH3ToChildrenSize(h::H3Index, childRes::Int)::Int
 
 Returns the size of the array needed by h3ToChildren for these inputs.
 """
-function maxH3ToChildrenSize(h::H3Index, childRes::Integer)::Int
+function maxH3ToChildrenSize(h::H3Index, childRes::Int)::Int
     Lib.maxH3ToChildrenSize(h, childRes)
 end
 
@@ -348,48 +345,6 @@ Returns the size of the array needed by uncompact.
 function maxUncompactSize(compactedSet::Vector{H3Index}, res::Int)::Int
     hexCount = length(compactedSet)
     Lib.maxUncompactSize(compactedSet, hexCount, res)
-end
-
-
-# Region functions
-
-"""
-    polyfill(geoPolygon::GeoPolygon, res::Int)::Vector{H3Index}
-"""
-function polyfill(geoPolygon::GeoPolygon, res::Int)::Vector{H3Index}
-    numHexagons = Lib.maxPolyfillSize(Ref(geoPolygon), res)
-    out = Vector{H3Index}(undef, numHexagons)
-    Lib.polyfill(Ref(geoPolygon), res, out)
-    out
-end
-
-"""
-    maxPolyfillSize(geoPolygon::GeoPolygon, res::Int)::Int
-
-maxPolyfillSize returns the number of hexagons to allocate space for when performing a polyfill on the given GeoJSON-like data structure.
-"""
-function maxPolyfillSize(geoPolygon::GeoPolygon, res::Int)::Int
-    Lib.maxPolyfillSize(Ref(geoPolygon), res)
-end
-
-"""
-    h3SetToLinkedGeo(h3Set::Vector{H3Index})::Ref{LinkedGeoPolygon}
-
-Create a LinkedGeoPolygon describing the outline(s) of a set of hexagons. Polygon outlines will follow GeoJSON MultiPolygon order: Each polygon will have one outer loop, which is first in the list, followed by any holes.
-"""
-function h3SetToLinkedGeo(h3Set::Vector{H3Index})::Ref{LinkedGeoPolygon}
-    refpolygon = Ref{LinkedGeoPolygon}(LinkedGeoPolygon(C_NULL,C_NULL,C_NULL))
-    Lib.h3SetToLinkedGeo(C_NULL, 0, refpolygon)
-    refpolygon
-end
-
-"""
-    destroyLinkedPolygon(polygon::Ref{LinkedGeoPolygon})
-
-Free all allocated memory for a linked geo structure. The caller is responsible for freeing memory allocated to the input polygon struct.
-"""
-function destroyLinkedPolygon(refpolygon::Ref{LinkedGeoPolygon})
-    Lib.destroyLinkedPolygon(refpolygon)
 end
 
 
@@ -481,65 +436,47 @@ end
 # Miscellaneous H3 functions
 
 """
-    degsToRads(degrees::Union{Cdouble,Integer})::Cdouble
-
-Converts degrees to radians.
-"""
-function degsToRads(degrees::Union{Cdouble,Integer})::Cdouble
-    Lib.degsToRads(degrees)
-end
-
-"""
-    radsToDegs(radians::Union{Cdouble,Integer})::Cdouble
-
-Converts radians to degrees.
-"""
-function radsToDegs(radians::Union{Cdouble,Integer})::Cdouble
-    Lib.radsToDegs(radians)
-end
-
-"""
-    hexAreaKm2(res::Integer)::Cdouble
+    hexAreaKm2(res::Int)::Cdouble
 
 Average hexagon area in square kilometers at the given resolution.
 """
-function hexAreaKm2(res::Integer)::Cdouble
+function hexAreaKm2(res::Int)::Cdouble
     Lib.hexAreaKm2(res)
 end
 
 """
-    hexAreaM2(res::Integer)::Cdouble
+    hexAreaM2(res::Int)::Cdouble
 
 Average hexagon area in square meters at the given resolution.
 """
-function hexAreaM2(res::Integer)::Cdouble
+function hexAreaM2(res::Int)::Cdouble
     Lib.hexAreaM2(res)
 end
 
 """
-    edgeLengthKm(res::Integer)::Cdouble
+    edgeLengthKm(res::Int)::Cdouble
 
 Average hexagon edge length in kilometers at the given resolution.
 """
-function edgeLengthKm(res::Integer)::Cdouble
+function edgeLengthKm(res::Int)::Cdouble
     Lib.edgeLengthKm(res)
 end
 
 """
-    edgeLengthM(res::Integer)::Cdouble
+    edgeLengthM(res::Int)::Cdouble
 
 Average hexagon edge length in meters at the given resolution.
 """
-function edgeLengthM(res::Integer)::Cdouble
+function edgeLengthM(res::Int)::Cdouble
     Lib.edgeLengthM(res)
 end
 
 """
-    numHexagons(res::Integer)::Int64
+    numHexagons(res::Int)::Int
 
 Number of unique H3 indexes at the given resolution.
 """
-function numHexagons(res::Integer)::Int64
+function numHexagons(res::Int)::Int
     Lib.numHexagons(res)
 end
 

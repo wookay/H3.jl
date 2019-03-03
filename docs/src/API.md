@@ -49,14 +49,6 @@ uncompact
 maxUncompactSize
 ```
 
-# Region functions
-```@docs
-polyfill
-maxPolyfillSize
-h3SetToLinkedGeo
-destroyLinkedPolygon
-```
-
 # Unidirectional edge functions
 ```@docs
 h3IndexesAreNeighbors

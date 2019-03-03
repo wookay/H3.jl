@@ -14,4 +14,20 @@ Lib.Vec2d
 Lib.Vec3d
 Lib.CoordIJK
 Lib.FaceIJK
+Lib.VertexNode
+Lib.VertexGraph
+```
+
+# Region functions
+```@docs
+Lib.polyfill
+Lib.maxPolyfillSize
+Lib.h3SetToLinkedGeo
+Lib.destroyLinkedPolygon
+```
+
+# Vertex Graph
+```@docs
+Lib.initVertexGraph
+Lib.destroyVertexGraph
 ```
