@@ -1,7 +1,7 @@
 # H3.API
 
 !!! note
-    the descriptions are taken from
+    descriptions are taken from
     - [https://github.com/uber/h3/tree/master/docs/api](https://github.com/uber/h3/tree/master/docs/api)
     - [https://github.com/uber/h3/blob/master/src/h3lib/include/h3api.h.in](https://github.com/uber/h3/blob/master/src/h3lib/include/h3api.h.in)
 
@@ -63,8 +63,6 @@ getH3UnidirectionalEdgeBoundary
 
 # Miscellaneous H3 functions
 ```@docs
-degsToRads
-radsToDegs
 hexAreaKm2
 hexAreaM2
 edgeLengthKm

@@ -8,7 +8,7 @@ using CEnum # @cenum
 
 ###
 #
-# * the descriptions are taken from
+# * descriptions are taken from
 #   - https://github.com/uber/h3/tree/master/docs/api
 #   - https://github.com/uber/h3/blob/master/src/h3lib/include/h3api.h.in
 #
