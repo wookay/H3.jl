@@ -4,6 +4,7 @@ include("../deps/deps.jl")
 include("../gen/libh3_types.jl")
 include("../gen/libh3_functions.jl")
 
+using CEnum # @cenum
 
 ###
 #
@@ -12,6 +13,20 @@ include("../gen/libh3_functions.jl")
 #   - https://github.com/uber/h3/blob/master/src/h3lib/include/h3api.h.in
 #
 ###
+
+
+### Constants
+
+const H3_INIT               = UInt64(35184372088831)  # H3 index with mode 0, res 0, base cell 0, and 7 for all index digits.  0x00001fffffffffff
+const H3_MODE_OFFSET        = 59  # The bit offset of the mode in an H3 index.
+const H3_MODE_MASK          = UInt64(15) << H3_MODE_OFFSET  # 1's in the 4 mode bits, 0's everywhere else.  0x7800000000000000
+const H3_MODE_MASK_NEGATIVE = ~H3_MODE_MASK
+const MAX_H3_RES            = 15  # max H3 resolution; H3 version 1 has 16 resolutions, numbered 0 through 15
+const H3_PER_DIGIT_OFFSET   = 3   # The number of bits in a single H3 resolution digit.
+const H3_DIGIT_MASK         = UInt64(7)  # 1's in the 3 bits of res 15 digit bits, 0's everywhere else.
+const H3_HEXAGON_MODE       = 1  # H3 index modes
+const H3_UNIEDGE_MODE       = 2  # H3 index modes
+
 
 ### Types
 
@@ -129,6 +144,66 @@ struct VertexGraph
     numBuckets::Cint
     size::Cint
     res::Cint
+end
+
+"""
+    Direction
+
+H3 digit representing ijk+ axes direction. Values will be within the lowest 3 bits of an integer.
+"""
+Direction
+
+@cenum(Direction,
+    CENTER_DIGIT  = 0,  # H3 digit in center
+    K_AXES_DIGIT  = 1,  # H3 digit in k-axes direction
+    J_AXES_DIGIT  = 2,  # H3 digit in j-axes direction
+    JK_AXES_DIGIT = 3,  # H3 digit in j == k direction
+    I_AXES_DIGIT  = 4,  # H3 digit in i-axes direction
+    IK_AXES_DIGIT = 5,  # H3 digit in i == k direction
+    IJ_AXES_DIGIT = 6,  # H3 digit in i == j direction
+    INVALID_DIGIT = 7,  # H3 digit in the invalid direction
+)
+
+
+### H3Index functions
+
+"""
+    setH3Index(refh::Ref{H3Index}, res::Int, baseCell::Int, initDigit::Union{Int, Direction})
+
+Initializes an H3 index.
+"""
+function setH3Index(refh::Ref{H3Index}, res::Int, baseCell::Int, initDigit::Union{Int, Direction})
+    ccall((:setH3Index, libh3), Cvoid, (Ptr{H3Index}, Cint, Cint, Direction), refh, res, baseCell, initDigit)
+end
+
+"""
+    h3GetIndexDigit(h::H3Index, res::Int)::Direction
+
+Gets the resolution res integer digit (0-7) of h3.
+`#define H3_GET_INDEX_DIGIT(h3, res)`
+"""
+function h3GetIndexDigit(h::H3Index, res::Int)::Direction
+    Direction((h >> ((MAX_H3_RES - res) * H3_PER_DIGIT_OFFSET)) & H3_DIGIT_MASK)
+end
+
+"""
+    h3GetMode(h::H3Index)::Int
+
+Gets the integer mode of h3.
+`#define H3_GET_MODE(h3)`
+"""
+function h3GetMode(h::H3Index)::Int
+    Int((h & H3_MODE_MASK) >> H3_MODE_OFFSET)
+end
+
+"""
+    h3SetMode(refh::Ref{H3Index}, v::Int)
+
+Sets the integer mode of h3 to v.
+`#define H3_SET_MODE(h3, v)`
+"""
+function h3SetMode(refh::Ref{H3Index}, v::Int)
+    refh[] = (refh[] & H3_MODE_MASK_NEGATIVE) | (UInt64(v) << H3_MODE_OFFSET)
 end
 
 

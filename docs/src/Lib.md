@@ -16,6 +16,15 @@ Lib.CoordIJK
 Lib.FaceIJK
 Lib.VertexNode
 Lib.VertexGraph
+Lib.Direction
+```
+
+# H3Index functions
+```@docs
+Lib.setH3Index
+Lib.h3GetIndexDigit
+Lib.h3GetMode
+Lib.h3SetMode
 ```
 
 # Region functions

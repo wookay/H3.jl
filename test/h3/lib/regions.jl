@@ -2,6 +2,13 @@ module test_h3_lib_regions
 
 using Test
 using H3.Lib
+
+Lib.polyfill
+Lib.maxPolyfillSize
+Lib.h3SetToLinkedGeo
+Lib.destroyLinkedPolygon
+
+
 using .Lib: H3Index, GeoCoord, Geofence, GeoPolygon
 
 # https://github.com/uber/h3/blob/master/src/apps/testapps/testPolyfill.c#L25
