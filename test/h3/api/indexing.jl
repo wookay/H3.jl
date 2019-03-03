@@ -35,6 +35,6 @@ center = h3ToGeo(indexed)
 @test (rad2deg(center.lat), rad2deg(center.lon)) == (40.68942184369929, -74.04443139990863)
 
 @test geoToH3(GeoCoord(0, 0), 0) == 0x08075fffffffffff
-@test geoToH3(GeoCoord(0, 0), 5) ==  0x085754e67fffffff
+@test geoToH3(GeoCoord(0, 0), 5) == 0x085754e67fffffff
 
 end # module test_h3_api_indexing
