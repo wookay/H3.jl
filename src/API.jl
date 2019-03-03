@@ -486,7 +486,7 @@ end
 All the resolution 0 H3 indexes.
 """
 function getRes0Indexes()::Vector{H3Index}
-    out = Vector{H3Index}(undef, Lib.res0IndexCount() * sizeof(H3Index))
+    out = Vector{H3Index}(undef, Lib.res0IndexCount())
     Lib.getRes0Indexes(out)
     out
 end

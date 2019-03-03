@@ -26,6 +26,7 @@ const H3_PER_DIGIT_OFFSET   = 3   # The number of bits in a single H3 resolution
 const H3_DIGIT_MASK         = UInt64(7)  # 1's in the 3 bits of res 15 digit bits, 0's everywhere else.
 const H3_HEXAGON_MODE       = 1  # H3 index modes
 const H3_UNIEDGE_MODE       = 2  # H3 index modes
+const NUM_BASE_CELLS        = 122  # The number of H3 base cells
 
 
 ### Types
