@@ -37,4 +37,20 @@ center = h3ToGeo(indexed)
 @test geoToH3(GeoCoord(0, 0), 0) == 0x08075fffffffffff
 @test geoToH3(GeoCoord(0, 0), 5) == 0x085754e67fffffff
 
+# https://github.com/wookay/H3.jl/issues/2
+@testset "Compact issue" begin
+    hids = Array{UInt64, 1}()
+
+    open(normpath(@__DIR__, "tmp.h3index"), "r") do fp
+        while !eof(fp)
+            push!(hids, read(fp, H3Index))
+        end
+    end
+
+    l = length([h for h in compact(hids) if h3IsValid(h)])
+    for i in 1:1000
+        @test length([h for h in compact(hids) if h3IsValid(h)]) == l
+    end
+end
+
 end # module test_h3_api_indexing
