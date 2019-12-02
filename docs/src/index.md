@@ -1,6 +1,8 @@
 # H3.jl ⬡
 
-H3.jl provides a Julia version of H3, Hexagonal hierarchical geospatial indexing system. https://github.com/uber/h3
+<https://github.com/wookay/H3.jl>
+
+`H3.jl` provides a Julia version of H3, Hexagonal hierarchical geospatial indexing system. https://github.com/uber/h3
 
 ```julia
 using H3.API
