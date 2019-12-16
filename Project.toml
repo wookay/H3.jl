@@ -17,5 +17,5 @@ test = ["Test", "Jive"]
 
 [compat]
 BinaryProvider = "0.5"
-CEnum = "0.1, 0.2"
+CEnum = "0.2"
 julia = "1"
