@@ -21,14 +21,14 @@ sfVerts = [GeoCoord(0.659966917655, -2.1364398519396),
            GeoCoord(0.6599990002976, -2.1376771158464)]
 sfGeofence = Geofence(6, pointer(sfVerts))
 sfGeoPolygon = GeoPolygon(sfGeofence, 0, C_NULL)
-@test Lib.maxPolyfillSize(Ref(sfGeoPolygon), 9) == 3169
+@test Lib.maxPolyfillSize(Ref(sfGeoPolygon), 9) == 7057
 
 holeVerts = [GeoCoord(0.6595072188743, -2.1371053983433),
              GeoCoord(0.6591482046471, -2.1373141048153),
              GeoCoord(0.6592295020837, -2.1365222838402)]
 holeGeofence = Geofence(3, pointer(holeVerts))
 holeGeoPolygon = GeoPolygon(sfGeofence, 1, pointer_from_objref(Ref(holeGeofence)))
-@test Lib.maxPolyfillSize(Ref(holeGeoPolygon), 9) == 3169
+@test Lib.maxPolyfillSize(Ref(holeGeoPolygon), 9) == 7057
 
 emptyVerts = [GeoCoord(0.659966917655, -2.1364398519394),
               GeoCoord(0.659966917655, -2.1364398519395),
