@@ -6,7 +6,7 @@ using CEnum
 # Skipping MacroDefinition: H3_EXPORT ( name ) name
 
 const H3_VERSION_MAJOR = 3
-const H3_VERSION_MINOR = 4
+const H3_VERSION_MINOR = 6
 const H3_VERSION_PATCH = 2
 const MAX_CELL_BNDRY_VERTS = 10
 const H3Index = UInt64

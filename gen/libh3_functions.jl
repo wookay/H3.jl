@@ -93,6 +93,14 @@ function getRes0Indexes(out)
     ccall((:getRes0Indexes, libh3), Cvoid, (Ptr{H3Index},), out)
 end
 
+function pentagonIndexCount()
+    ccall((:pentagonIndexCount, libh3), Cint, ())
+end
+
+function getPentagonIndexes(res, out)
+    ccall((:getPentagonIndexes, libh3), Cvoid, (Cint, Ptr{H3Index}), res, out)
+end
+
 function h3GetResolution(h)
     ccall((:h3GetResolution, libh3), Cint, (H3Index,), h)
 end
@@ -106,7 +114,7 @@ function stringToH3(str)
 end
 
 function h3ToString(h, str, sz)
-    ccall((:h3ToString, libh3), Cvoid, (H3Index, Cstring, Csize_t), h, str, sz)
+    ccall((:h3ToString, libh3), Cvoid, (H3Index, Cstring, Cint), h, str, sz)
 end
 
 function h3IsValid(h)
@@ -123,6 +131,10 @@ end
 
 function h3ToChildren(h, childRes, children)
     ccall((:h3ToChildren, libh3), Cvoid, (H3Index, Cint, Ptr{H3Index}), h, childRes, children)
+end
+
+function h3ToCenterChild(h, childRes)
+    ccall((:h3ToCenterChild, libh3), H3Index, (H3Index, Cint), h, childRes)
 end
 
 function compact(h3Set, compactedSet, numHexes)
@@ -143,6 +155,14 @@ end
 
 function h3IsPentagon(h)
     ccall((:h3IsPentagon, libh3), Cint, (H3Index,), h)
+end
+
+function maxFaceCount(h3)
+    ccall((:maxFaceCount, libh3), Cint, (H3Index,), h3)
+end
+
+function h3GetFaces(h3, out)
+    ccall((:h3GetFaces, libh3), Cvoid, (H3Index, Ptr{Cint}), h3, out)
 end
 
 function h3IndexesAreNeighbors(origin, destination)
