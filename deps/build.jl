@@ -1,10 +1,10 @@
 using BinaryProvider # requires BinaryProvider 0.3.0 or later
 
 # Parse some basic command-line arguments
-const verbose = "--verbose" in ARGS
+const verbose = true # "--verbose" in ARGS
 const prefix = Prefix(joinpath(@__DIR__, "usr"))
 products = [
-    LibraryProduct(prefix, ["libh3"], :libh3),
+    LibraryProduct(prefix, "libh3", :libh3),
 ]
 
 # Download binaries from hosted location
