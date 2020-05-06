@@ -1,7 +1,7 @@
 using BinaryProvider # requires BinaryProvider 0.3.0 or later
 
 # Parse some basic command-line arguments
-const verbose = true # "--verbose" in ARGS
+const verbose = "--verbose" in ARGS
 const prefix = Prefix(joinpath(@__DIR__, "usr"))
 products = [
     LibraryProduct(prefix, "libh3", :libh3),
@@ -54,5 +54,35 @@ if unsatisfied || !isinstalled(dl_info...; prefix=prefix)
     install(dl_info...; prefix=prefix, force=true, verbose=verbose)
 end
 
-# Write out a deps.jl file that will contain mappings for our products
-write_deps_file(joinpath(@__DIR__, "deps.jl"), products, verbose=verbose)
+try
+    # Write out a deps.jl file that will contain mappings for our products
+    write_deps_file(joinpath(@__DIR__, "deps.jl"), products, verbose=verbose)
+catch err
+    print_error = true
+    # issue #8
+    if Sys.isapple()
+        using Libdl
+        libh3 = joinpath(dirname(@__FILE__), "usr/lib/libh3.1.dylib")
+        if !(Libdl.dlopen_e(libh3) in (C_NULL, nothing))
+            print_error = false
+            depsjl_path = normpath(@__DIR__, "deps.jl")
+            open(depsjl_path, "w") do depsjl_file
+                println(depsjl_file, raw"""
+# generated
+import Libdl
+const libh3 = joinpath(dirname(@__FILE__), "usr/lib/libh3.1.dylib")
+function check_deps()
+    global libh3
+    if !isfile(libh3)
+        error("$(libh3) does not exist, Please re-run Pkg.build(\\"H3\\"), and restart Julia.")
+    end
+    if Libdl.dlopen_e(libh3) in (C_NULL, nothing)
+        error("$(libh3) cannot be opened, Please re-run Pkg.build(\\"H3\\"), and restart Julia.")
+    end
+end
+""")
+            end
+        end
+    end # if Sys.isapple()
+    print_error && println(err)
+end # try catch
