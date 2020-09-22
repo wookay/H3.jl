@@ -1,6 +1,6 @@
 using H3.API # GeoCoord geoToH3 kRing h3ToGeoBoundary
 
-base = geoToH3(GeoCoord(0, 0), 5)
+base = geoToH3(GeoCoord(deg2rad(0), deg2rad(0)), 5)
 rings = kRing(base, 1)
 
 x = Vector{Float64}()
