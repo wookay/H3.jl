@@ -1,8 +1,8 @@
 # H3.jl ⬡
 
-|  **Documentation**                        |  **Build Status**                                                |
-|:-----------------------------------------:|:----------------------------------------------------------------:|
-|  [![][docs-latest-img]][docs-latest-url]  |  [![][travis-img]][travis-url]  [![][codecov-img]][codecov-url]  |
+|  **Documentation**                        |  **Build Status**                                                  |
+|:-----------------------------------------:|:------------------------------------------------------------------:|
+|  [![][docs-latest-img]][docs-latest-url]  |  [![][actions-img]][actions-url]  [![][codecov-img]][codecov-url]  |
 
 `H3.jl` provides a Julia version of H3, Hexagonal hierarchical geospatial indexing system. https://github.com/uber/h3
 
@@ -28,8 +28,8 @@ using UnicodePlots
 [docs-latest-img]: https://img.shields.io/badge/docs-latest-blue.svg
 [docs-latest-url]: https://wookay.github.io/docs/H3.jl/
 
-[travis-img]: https://api.travis-ci.org/wookay/H3.jl.svg?branch=master
-[travis-url]: https://travis-ci.org/wookay/H3.jl
+[actions-img]: https://github.com/wookay/H3.jl/workflows/CI/badge.svg
+[actions-url]: https://github.com/wookay/H3.jl/actions
 
 [codecov-img]: https://codecov.io/gh/wookay/H3.jl/branch/master/graph/badge.svg
 [codecov-url]: https://codecov.io/gh/wookay/H3.jl/branch/master
