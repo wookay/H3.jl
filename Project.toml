@@ -1,17 +1,19 @@
 name = "H3"
 uuid = "f62fece2-b996-571a-b4c9-e662aba1c617"
 authors = ["WooKyoung Noh <wookay.noh@gmail.com>"]
-version = "0.1.4-DEV"
+version = "0.2.0-DEV"
 
 [deps]
+H3_jll = "60c8821e-da38-5dbd-93c7-983f1e6d69be"
 BinaryProvider = "b99e7846-7c00-51b0-8f62-c81ae34c0232"
 CEnum = "fa961155-64e5-5f13-b03f-caf6b980ea82"
 Libdl = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
 
 [compat]
+H3_jll = "3.7"
 BinaryProvider = "0.5, 0.6"
 CEnum = "0.4"
-julia = "1"
+julia = "1.6"
 
 [extras]
 Jive = "ba5e3d4b-8524-549f-bc71-e76ad9e9deed"

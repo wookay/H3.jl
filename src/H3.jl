@@ -1,6 +1,6 @@
 module H3
 
-include("Lib.jl")
+include("../gen/Lib.jl")
 include("API.jl")
 
 end # module H3

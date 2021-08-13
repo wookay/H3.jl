@@ -18,12 +18,6 @@ Lib.h3IsPentagon
 
 @test Lib.stringToH3("85283473fffffff") == 0x085283473fffffff
 
-# https://medium.com/stuart-engineering/ruby-bindings-and-extensions-91c794eb9acd
-bufSz = 17 # 16 hexadecimal characters plus a null terminator
-buf = Base.unsafe_convert(Cstring, "")
-Lib.h3ToString(0x085283473fffffff, buf, bufSz)
-@test Base.unsafe_string(buf) == "85283473fffffff"
-
 @test Lib.h3IsValid(0x85283473fffffff) == 1
 @test Lib.h3IsValid(0x5004295803a8800) == 0
 

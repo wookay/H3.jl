@@ -28,7 +28,7 @@ export ijToIjk, ijkToHex2d, ijkToIj, ijkDistance, ijkNormalize, h3ToLocalIjk, h3
 using ..Lib
 using .Lib: H3Index, GeoCoord, GeoBoundary, CoordIJ
 using .Lib: Vec2d, Vec3d, CoordIJK, FaceIJK
-using .Lib: H3_INVALID_INDEX
+using .Lib: H3_NULL
 
 ###
 #
@@ -110,10 +110,7 @@ end
 Converts the H3Index representation of the index to the string representation.
 """
 function h3ToString(h::H3Index)::String
-    bufSz = 17
-    buf = Base.unsafe_convert(Cstring, "")
-    Lib.h3ToString(h, buf, bufSz)
-    Base.unsafe_string(buf)
+    string(h, base=16)
 end
 
 """
@@ -320,7 +317,7 @@ Compacts the set h3Set of indexes as best as possible, into the array compactedS
 """
 function compact(h3Set::Vector{H3Index})::Vector{H3Index}
     numHexes = length(h3Set)
-    compactedSet = fill(H3_INVALID_INDEX, numHexes)
+    compactedSet = fill(H3_NULL, numHexes)
     Lib.compact(h3Set, compactedSet, numHexes)
     compactedSet
 end

@@ -34,26 +34,18 @@ Lib.h3ToGeoBoundary(0x85283473fffffff, boundary)
 using H3.API
 
 bc = Lib.H3_INIT
-@test Lib.h3GetMode(bc) == 0
 @test API.h3GetResolution(bc) == 0
 @test API.h3GetBaseCell(bc) == 0
 
 refh = Ref{H3Index}()
-Lib.setH3Index(refh, 5, 12, 1)
+Lib.setH3Index(refh, 5, 12, Lib.Direction(1))
 @test refh[] == 0x085184927fffffff
 @test API.h3GetResolution(refh[]) == 5
 @test API.h3GetBaseCell(refh[]) == 12
-@test Lib.h3GetIndexDigit(refh[], 5) == 1
-@test Lib.h3GetMode(refh[]) == Lib.H3_HEXAGON_MODE
 
-Lib.setH3Index(refh, 0, 0, 0)
+Lib.setH3Index(refh, 0, 0, Lib.Direction(0))
 @test refh[] == 0x08001fffffffffff
 @test API.h3GetResolution(refh[]) == 0
 @test API.h3GetBaseCell(refh[]) == 0
-@test Lib.h3GetIndexDigit(refh[], 0) == 0
-@test Lib.h3GetMode(refh[]) == Lib.H3_HEXAGON_MODE
-
-Lib.h3SetMode(refh, 0)
-@test refh[] == 0x00001fffffffffff == Lib.H3_INIT
 
 end # module test_h3_lib_indexing

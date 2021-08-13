@@ -1,0 +1,36 @@
+[general]
+library_name = "libh3"
+output_file_path = "./Lib.jl"
+module_name = "Lib"
+jll_pkg_name = "H3_jll"
+export_symbol_prefixes = []
+prologue_file_path = "./prologue.jl"
+use_deterministic_symbol = true
+
+printer_blacklist = [
+    "M_2PI",
+    "M_PI_180",
+    "M_180_PI",
+    "EPSILON",
+    "M_SQRT3_2",
+    "M_SIN60",
+    "M_AP7_ROT_RADS",
+    "M_SIN_AP7_ROT",
+    "M_COS_AP7_ROT",
+    "EARTH_RADIUS_KM",
+    "RES0_U_GNOMONIC",
+    "EPSILON_RAD",
+    "INIT_ITERATION_LINKED_LOOP",
+    "INIT_ITERATION_GEOFENCE"
+]
+
+[codegen.macro]
+macro_mode = "basic"
+
+functionlike_macro_whitelist = [
+]
+
+ignore_header_guards = true
+ignore_header_guards_with_suffixes = ["_H_", "_H__"]
+
+ignore_pure_definition = false
