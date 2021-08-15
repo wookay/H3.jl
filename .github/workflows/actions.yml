@@ -16,22 +16,35 @@ jobs:
           - julia-version: nightly
             os: ubuntu-latest
     steps:
-      - uses: actions/checkout@master
-      - uses: julia-actions/setup-julia@latest
+      - uses: actions/checkout@v2
+      - uses: julia-actions/setup-julia@v1
         with:
           version: ${{ matrix.julia-version }}
-      - name: runtests
-        run: |
-             julia --project=. -e 'using Pkg; Pkg.test()'
+      - uses: actions/cache@v1
+        env:
+          cache-name: cache-artifacts
+        with:
+          path: ~/.julia/artifacts
+          key: ${{ runner.os }}-test-${{ env.cache-name }}-${{ hashFiles('**/Project.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-test-${{ env.cache-name }}-
+            ${{ runner.os }}-test-
+            ${{ runner.os }}-
+      - uses: julia-actions/julia-buildpkg@v1
+      - uses: julia-actions/julia-runtest@v1
 
   Coverage:
     needs: Test
     if: github.event.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@master
-      - name: coverage
-        run: |
-             julia --project=. -e 'using Pkg; Pkg.test(coverage=true)'
-             julia --project=. -e 'using Pkg; Pkg.add("Coverage"); using Coverage; cov = Coverage.process_folder(); mkdir("coverage"); Coverage.LCOV.writefile("coverage/lcov.info", cov)'
+      - uses: actions/checkout@v2
+      - uses: julia-actions/setup-julia@v1
+        with:
+          version: 1.6.2
+      - uses: julia-actions/julia-buildpkg@v1
+      - uses: julia-actions/julia-runtest@v1
+      - uses: julia-actions/julia-processcoverage@v1
       - uses: codecov/codecov-action@v1
+        with:
+          file: lcov.info
