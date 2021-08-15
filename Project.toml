@@ -1,7 +1,7 @@
 name = "H3"
 uuid = "f62fece2-b996-571a-b4c9-e662aba1c617"
 authors = ["WooKyoung Noh <wookay.noh@gmail.com>"]
-version = "0.2.0-DEV"
+version = "0.2.0"
 
 [deps]
 H3_jll = "60c8821e-da38-5dbd-93c7-983f1e6d69be"
