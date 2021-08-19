@@ -3,7 +3,6 @@
 using Clang.Generators
 using H3_jll
 
-const h3 = H3_jll.find_artifact_dir()
 const h3api_dir = normpath(H3_jll.find_artifact_dir(), "include/h3")
 const h3api_header = normpath(h3api_dir, "h3api.h")
 
