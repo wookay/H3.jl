@@ -11,8 +11,6 @@ jobs:
         julia-arch: [x64]
         os: [ubuntu-latest, macos-latest, windows-latest]
         include:
-          - julia-version: 1.6.0
-            os: ubuntu-latest
           - julia-version: nightly
             os: ubuntu-latest
     steps:
@@ -32,6 +30,15 @@ jobs:
             ${{ runner.os }}-
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
+      - name: DebugArtifacts
+        run: |
+             if VERSION == v"1.6.2"
+                 using Pkg
+                 Pkg.add(PackageSpec(url="https://github.com/giordano/DebugArtifacts.jl.git"))
+                 using DebugArtifacts
+                 debug_artifact("H3")
+             end
+        shell: julia --project=. {0}
 
   Coverage:
     needs: Test
