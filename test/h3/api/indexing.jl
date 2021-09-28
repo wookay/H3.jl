@@ -48,8 +48,8 @@ center = h3ToGeo(indexed)
     end
 
     l = length([h for h in compact(hids) if h3IsValid(h)])
-    for i in 1:1000
-        @test length([h for h in compact(hids) if h3IsValid(h)]) == l
+    @test all(1:1000) do i
+        length([h for h in compact(hids) if h3IsValid(h)]) == l
     end
 end
 
