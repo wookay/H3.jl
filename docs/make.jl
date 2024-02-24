@@ -11,10 +11,9 @@ makedocs(
         assets = ["assets/custom.css"],
     ),
     sitename = "H3.jl ⬡",
-    authors = "WooKyoung Noh",
+    authors = "",
     pages = Any[
         "Home" => "index.md",
         "API" => "API.md",
-        "Lib" => "Lib.md",
     ],
 )

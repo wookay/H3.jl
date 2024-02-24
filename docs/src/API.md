@@ -2,63 +2,63 @@
 
 !!! note
     descriptions are taken from
-    - [https://github.com/uber/h3/tree/master/docs/api](https://github.com/uber/h3/tree/master/docs/api)
+    - [https://h3geo.org/docs/](https://h3geo.org/docs/)
     - [https://github.com/uber/h3/blob/master/src/h3lib/include/h3api.h.in](https://github.com/uber/h3/blob/master/src/h3lib/include/h3api.h.in)
 
 # Indexing functions
 ```@docs
-geoToH3
-h3ToGeo
-h3ToGeoBoundary
+latLngToCell
+cellToLatLng
+cellToBoundary
 ```
 
 # Index inspection functions
 ```@docs
-h3GetResolution
-h3GetBaseCell
+getResolution
+getBaseCellNumber
 stringToH3
 h3ToString
-h3IsValid
-h3IsResClassIII
-h3IsPentagon
+isValidCell
+isResClassIII
+isPentagon
 ```
 
 # Grid traversal functions
 ```@docs
-kRing
-maxKringSize
-kRingDistances
-hexRange
-hexRangeDistances
-hexRanges
-hexRing
-h3Line
-h3LineSize
-h3Distance
-experimentalH3ToLocalIj
-experimentalLocalIjToH3
+gridDisk
+maxGridDiskSize
+gridDiskDistances
+gridDiskUnsafe
+gridDiskDistancesUnsafe
+gridDisksUnsafe
+gridRingUnsafe
+gridPathCells
+gridPathCellsSize
+gridDistance
+cellToLocalIj
+localIjToCell
 ```
 
 # Hierarchical grid functions
 ```@docs
-h3ToParent
-h3ToChildren
-maxH3ToChildrenSize
-compact
-uncompact
-maxUncompactSize
+cellToParent
+cellToChildren
+cellToChildrenSize
+compactCells
+uncompactCells
+uncompactCellsSize
 ```
 
 # Unidirectional edge functions
 ```@docs
-h3IndexesAreNeighbors
-getH3UnidirectionalEdge
-h3UnidirectionalEdgeIsValid
-getOriginH3IndexFromUnidirectionalEdge
-getDestinationH3IndexFromUnidirectionalEdge
-getH3IndexesFromUnidirectionalEdge
-getH3UnidirectionalEdgesFromHexagon
-getH3UnidirectionalEdgeBoundary
+areNeighborCells
+cellsToDirectedEdge
+isValidDirectedEdge
+getDirectedEdgeOrigin
+getDirectedEdgeDestination
+directedEdgeToCells
+originToDirectedEdges
+directedEdgeToBoundary
 ```
 
 # Miscellaneous H3 functions
@@ -67,9 +67,9 @@ hexAreaKm2
 hexAreaM2
 edgeLengthKm
 edgeLengthM
-numHexagons
-getRes0Indexes
-res0IndexCount
+getNumCells
+getRes0Cells
+res0CellCount
 ```
 
 # Coordinate Systems
@@ -79,9 +79,9 @@ ijkToHex2d
 ijkToIj
 ijkDistance
 ijkNormalize
-h3ToLocalIjk
+cellToLocalIjk
 h3ToFaceIjk
-localIjkToH3
+localIjkToCell
 faceIjkToH3
 hex2dToCoordIJK
 geoToVec3d

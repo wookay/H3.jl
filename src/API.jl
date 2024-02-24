@@ -19,7 +19,7 @@ export cellToParent, cellToChildren, cellToChildrenSize, compactCells, uncompact
 export areNeighborCells, cellsToDirectedEdge, isValidDirectedEdge, getDirectedEdgeOrigin, getDirectedEdgeDestination, directedEdgeToCells, originToDirectedEdges, directedEdgeToBoundary
 
 # Miscellaneous H3 functions
-export hexAreaKm2, hexAreaM2, edgeLengthKm, edgeLengthM, getNumCells, getRes0Cells, res0IndexCount
+export hexAreaKm2, hexAreaM2, edgeLengthKm, edgeLengthM, getNumCells, getRes0Cells, res0CellCount
 
 # Coordinate Systems
 export ijToIjk, ijkToHex2d, ijkToIj, ijkDistance, ijkNormalize, cellToLocalIjk, h3ToFaceIjk, localIjkToCell, faceIjkToH3, hex2dToCoordIJK, geoToVec3d, geoToFaceIjk
