@@ -2,53 +2,41 @@ name: CI
 
 on: [pull_request, push]
 
+# needed to allow julia-actions/cache to delete old caches that it has created
+permissions:
+  actions: write
+  contents: read
+
 jobs:
   Test:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        julia-version: [1.6.3]
+        julia-version: [1.10.0]
         julia-arch: [x64]
         os: [ubuntu-latest, macos-latest, windows-latest]
         include:
           - julia-version: nightly
             os: ubuntu-latest
+          - julia-version: 1.6.7
+            os: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: julia-actions/setup-julia@v1
-        with:
-          version: ${{ matrix.julia-version }}
-      - uses: actions/cache@v1
-        env:
-          cache-name: cache-artifacts
-        with:
-          path: ~/.julia/artifacts
-          key: ${{ runner.os }}-test-${{ env.cache-name }}-${{ hashFiles('**/Project.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-test-${{ env.cache-name }}-
-            ${{ runner.os }}-test-
-            ${{ runner.os }}-
-      - uses: julia-actions/julia-buildpkg@v1
-      - uses: julia-actions/julia-runtest@v1
-      - name: DebugArtifacts
-        run: |
-             if v"1.6.3" >= VERSION
-                 using Pkg
-                 Pkg.add(PackageSpec(url="https://github.com/giordano/DebugArtifacts.jl.git"))
-                 using DebugArtifacts
-                 debug_artifact("H3")
-             end
-        shell: julia --project=. {0}
+    - uses: actions/checkout@v4
+    - uses: julia-actions/setup-julia@v1
+      with:
+        version: ${{ matrix.julia-version }}
+    - uses: julia-actions/cache@v1
+    - uses: julia-actions/julia-buildpkg@v1
+    - uses: julia-actions/julia-runtest@v1
 
   Coverage:
     needs: Test
     if: github.event.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - uses: julia-actions/setup-julia@v1
-        with:
-          version: 1.6.3
+      - uses: julia-actions/cache@v1
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
       - uses: julia-actions/julia-processcoverage@v1
