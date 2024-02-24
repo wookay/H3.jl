@@ -41,12 +41,13 @@ center = cellToLatLng(indexed)
 @testset "Compact issue" begin
     hids = Array{UInt64, 1}()
 
-    open(normpath(@__DIR__, "tmp.h3index"), "r") do fp
+    tmp_h3index_path = normpath(@__DIR__, "tmp.h3index")
+    @test isfile(tmp_h3index_path)
+    open(tmp_h3index_path, "r") do fp
         while !eof(fp)
             push!(hids, read(fp, H3Index))
         end
     end
-
     l = length([h for h in compactCells(hids) if isValidCell(h)])
     @test all(1:1000) do i
         length([h for h in compactCells(hids) if isValidCell(h)]) == l
