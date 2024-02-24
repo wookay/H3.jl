@@ -2,11 +2,11 @@ module test_h3_lib_hierarchy
 
 using H3.Lib
 
-Lib.h3ToParent
-Lib.h3ToChildren
-Lib.maxH3ToChildrenSize
-Lib.compact
-Lib.uncompact
-Lib.maxUncompactSize
+Lib.cellToParent
+Lib.cellToChildren
+Lib.cellToChildrenSize
+Lib.compactCells
+Lib.uncompactCells
+Lib.uncompactCellsSize
 
 end # module test_h3_lib_hierarchy

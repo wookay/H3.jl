@@ -11,25 +11,46 @@ const UINT64_C = UInt64
 
 const H3Index = UInt64
 
-struct GeoCoord
+const H3Error = UInt32
+
+@cenum H3ErrorCodes::UInt32 begin
+    E_SUCCESS = 0
+    E_FAILED = 1
+    E_DOMAIN = 2
+    E_LATLNG_DOMAIN = 3
+    E_RES_DOMAIN = 4
+    E_CELL_INVALID = 5
+    E_DIR_EDGE_INVALID = 6
+    E_UNDIR_EDGE_INVALID = 7
+    E_VERTEX_INVALID = 8
+    E_PENTAGON = 9
+    E_DUPLICATE_INPUT = 10
+    E_NOT_NEIGHBORS = 11
+    E_RES_MISMATCH = 12
+    E_MEMORY_ALLOC = 13
+    E_MEMORY_BOUNDS = 14
+    E_OPTION_INVALID = 15
+end
+
+struct LatLng
     lat::Cdouble
-    lon::Cdouble
+    lng::Cdouble
 end
 
-struct GeoBoundary
+struct CellBoundary
     numVerts::Cint
-    verts::NTuple{10, GeoCoord}
+    verts::NTuple{10, LatLng}
 end
 
-struct Geofence
+struct GeoLoop
     numVerts::Cint
-    verts::Ptr{GeoCoord}
+    verts::Ptr{LatLng}
 end
 
 struct GeoPolygon
-    geofence::Geofence
+    geoloop::GeoLoop
     numHoles::Cint
-    holes::Ptr{Geofence}
+    holes::Ptr{GeoLoop}
 end
 
 struct GeoMultiPolygon
@@ -37,14 +58,14 @@ struct GeoMultiPolygon
     polygons::Ptr{GeoPolygon}
 end
 
-struct LinkedGeoCoord
-    vertex::GeoCoord
-    next::Ptr{LinkedGeoCoord}
+struct LinkedLatLng
+    vertex::LatLng
+    next::Ptr{LinkedLatLng}
 end
 
 struct LinkedGeoLoop
-    first::Ptr{LinkedGeoCoord}
-    last::Ptr{LinkedGeoCoord}
+    first::Ptr{LinkedLatLng}
+    last::Ptr{LinkedLatLng}
     next::Ptr{LinkedGeoLoop}
 end
 
@@ -59,60 +80,64 @@ struct CoordIJ
     j::Cint
 end
 
-function geoToH3(g, res)
-    ccall((:geoToH3, libh3), H3Index, (Ptr{GeoCoord}, Cint), g, res)
+function latLngToCell(g, res, out)
+    ccall((:latLngToCell, libh3), H3Error, (Ptr{LatLng}, Cint, Ptr{H3Index}), g, res, out)
 end
 
-function h3ToGeo(h3, g)
-    ccall((:h3ToGeo, libh3), Cvoid, (H3Index, Ptr{GeoCoord}), h3, g)
+function cellToLatLng(h3, g)
+    ccall((:cellToLatLng, libh3), H3Error, (H3Index, Ptr{LatLng}), h3, g)
 end
 
-function h3ToGeoBoundary(h3, gp)
-    ccall((:h3ToGeoBoundary, libh3), Cvoid, (H3Index, Ptr{GeoBoundary}), h3, gp)
+function cellToBoundary(h3, gp)
+    ccall((:cellToBoundary, libh3), H3Error, (H3Index, Ptr{CellBoundary}), h3, gp)
 end
 
-function maxKringSize(k)
-    ccall((:maxKringSize, libh3), Cint, (Cint,), k)
+function maxGridDiskSize(k, out)
+    ccall((:maxGridDiskSize, libh3), H3Error, (Cint, Ptr{Int64}), k, out)
 end
 
-function hexRange(origin, k, out)
-    ccall((:hexRange, libh3), Cint, (H3Index, Cint, Ptr{H3Index}), origin, k, out)
+function gridDiskUnsafe(origin, k, out)
+    ccall((:gridDiskUnsafe, libh3), H3Error, (H3Index, Cint, Ptr{H3Index}), origin, k, out)
 end
 
-function hexRangeDistances(origin, k, out, distances)
-    ccall((:hexRangeDistances, libh3), Cint, (H3Index, Cint, Ptr{H3Index}, Ptr{Cint}), origin, k, out, distances)
+function gridDiskDistancesUnsafe(origin, k, out, distances)
+    ccall((:gridDiskDistancesUnsafe, libh3), H3Error, (H3Index, Cint, Ptr{H3Index}, Ptr{Cint}), origin, k, out, distances)
 end
 
-function hexRanges(h3Set, length, k, out)
-    ccall((:hexRanges, libh3), Cint, (Ptr{H3Index}, Cint, Cint, Ptr{H3Index}), h3Set, length, k, out)
+function gridDiskDistancesSafe(origin, k, out, distances)
+    ccall((:gridDiskDistancesSafe, libh3), H3Error, (H3Index, Cint, Ptr{H3Index}, Ptr{Cint}), origin, k, out, distances)
 end
 
-function kRing(origin, k, out)
-    ccall((:kRing, libh3), Cvoid, (H3Index, Cint, Ptr{H3Index}), origin, k, out)
+function gridDisksUnsafe(h3Set, length, k, out)
+    ccall((:gridDisksUnsafe, libh3), H3Error, (Ptr{H3Index}, Cint, Cint, Ptr{H3Index}), h3Set, length, k, out)
 end
 
-function kRingDistances(origin, k, out, distances)
-    ccall((:kRingDistances, libh3), Cvoid, (H3Index, Cint, Ptr{H3Index}, Ptr{Cint}), origin, k, out, distances)
+function gridDisk(origin, k, out)
+    ccall((:gridDisk, libh3), H3Error, (H3Index, Cint, Ptr{H3Index}), origin, k, out)
 end
 
-function hexRing(origin, k, out)
-    ccall((:hexRing, libh3), Cint, (H3Index, Cint, Ptr{H3Index}), origin, k, out)
+function gridDiskDistances(origin, k, out, distances)
+    ccall((:gridDiskDistances, libh3), H3Error, (H3Index, Cint, Ptr{H3Index}, Ptr{Cint}), origin, k, out, distances)
 end
 
-function maxPolyfillSize(geoPolygon, res)
-    ccall((:maxPolyfillSize, libh3), Cint, (Ptr{GeoPolygon}, Cint), geoPolygon, res)
+function gridRingUnsafe(origin, k, out)
+    ccall((:gridRingUnsafe, libh3), H3Error, (H3Index, Cint, Ptr{H3Index}), origin, k, out)
 end
 
-function polyfill(geoPolygon, res, out)
-    ccall((:polyfill, libh3), Cvoid, (Ptr{GeoPolygon}, Cint, Ptr{H3Index}), geoPolygon, res, out)
+function maxPolygonToCellsSize(geoPolygon, res, flags, out)
+    ccall((:maxPolygonToCellsSize, libh3), H3Error, (Ptr{GeoPolygon}, Cint, UInt32, Ptr{Int64}), geoPolygon, res, flags, out)
 end
 
-function h3SetToLinkedGeo(h3Set, numHexes, out)
-    ccall((:h3SetToLinkedGeo, libh3), Cvoid, (Ptr{H3Index}, Cint, Ptr{LinkedGeoPolygon}), h3Set, numHexes, out)
+function polygonToCells(geoPolygon, res, flags, out)
+    ccall((:polygonToCells, libh3), H3Error, (Ptr{GeoPolygon}, Cint, UInt32, Ptr{H3Index}), geoPolygon, res, flags, out)
 end
 
-function destroyLinkedPolygon(polygon)
-    ccall((:destroyLinkedPolygon, libh3), Cvoid, (Ptr{LinkedGeoPolygon},), polygon)
+function cellsToLinkedMultiPolygon(h3Set, numHexes, out)
+    ccall((:cellsToLinkedMultiPolygon, libh3), H3Error, (Ptr{H3Index}, Cint, Ptr{LinkedGeoPolygon}), h3Set, numHexes, out)
+end
+
+function destroyLinkedMultiPolygon(polygon)
+    ccall((:destroyLinkedMultiPolygon, libh3), Cvoid, (Ptr{LinkedGeoPolygon},), polygon)
 end
 
 function degsToRads(degrees)
@@ -123,194 +148,218 @@ function radsToDegs(radians)
     ccall((:radsToDegs, libh3), Cdouble, (Cdouble,), radians)
 end
 
-function pointDistRads(a, b)
-    ccall((:pointDistRads, libh3), Cdouble, (Ptr{GeoCoord}, Ptr{GeoCoord}), a, b)
+function greatCircleDistanceRads(a, b)
+    ccall((:greatCircleDistanceRads, libh3), Cdouble, (Ptr{LatLng}, Ptr{LatLng}), a, b)
 end
 
-function pointDistKm(a, b)
-    ccall((:pointDistKm, libh3), Cdouble, (Ptr{GeoCoord}, Ptr{GeoCoord}), a, b)
+function greatCircleDistanceKm(a, b)
+    ccall((:greatCircleDistanceKm, libh3), Cdouble, (Ptr{LatLng}, Ptr{LatLng}), a, b)
 end
 
-function pointDistM(a, b)
-    ccall((:pointDistM, libh3), Cdouble, (Ptr{GeoCoord}, Ptr{GeoCoord}), a, b)
+function greatCircleDistanceM(a, b)
+    ccall((:greatCircleDistanceM, libh3), Cdouble, (Ptr{LatLng}, Ptr{LatLng}), a, b)
 end
 
-function hexAreaKm2(res)
-    ccall((:hexAreaKm2, libh3), Cdouble, (Cint,), res)
+function getHexagonAreaAvgKm2(res, out)
+    ccall((:getHexagonAreaAvgKm2, libh3), H3Error, (Cint, Ptr{Cdouble}), res, out)
 end
 
-function hexAreaM2(res)
-    ccall((:hexAreaM2, libh3), Cdouble, (Cint,), res)
+function getHexagonAreaAvgM2(res, out)
+    ccall((:getHexagonAreaAvgM2, libh3), H3Error, (Cint, Ptr{Cdouble}), res, out)
 end
 
-function cellAreaRads2(h)
-    ccall((:cellAreaRads2, libh3), Cdouble, (H3Index,), h)
+function cellAreaRads2(h, out)
+    ccall((:cellAreaRads2, libh3), H3Error, (H3Index, Ptr{Cdouble}), h, out)
 end
 
-function cellAreaKm2(h)
-    ccall((:cellAreaKm2, libh3), Cdouble, (H3Index,), h)
+function cellAreaKm2(h, out)
+    ccall((:cellAreaKm2, libh3), H3Error, (H3Index, Ptr{Cdouble}), h, out)
 end
 
-function cellAreaM2(h)
-    ccall((:cellAreaM2, libh3), Cdouble, (H3Index,), h)
+function cellAreaM2(h, out)
+    ccall((:cellAreaM2, libh3), H3Error, (H3Index, Ptr{Cdouble}), h, out)
 end
 
-function edgeLengthKm(res)
-    ccall((:edgeLengthKm, libh3), Cdouble, (Cint,), res)
+function getHexagonEdgeLengthAvgKm(res, out)
+    ccall((:getHexagonEdgeLengthAvgKm, libh3), H3Error, (Cint, Ptr{Cdouble}), res, out)
 end
 
-function edgeLengthM(res)
-    ccall((:edgeLengthM, libh3), Cdouble, (Cint,), res)
+function getHexagonEdgeLengthAvgM(res, out)
+    ccall((:getHexagonEdgeLengthAvgM, libh3), H3Error, (Cint, Ptr{Cdouble}), res, out)
 end
 
-function exactEdgeLengthRads(edge)
-    ccall((:exactEdgeLengthRads, libh3), Cdouble, (H3Index,), edge)
+function edgeLengthRads(edge, length)
+    ccall((:edgeLengthRads, libh3), H3Error, (H3Index, Ptr{Cdouble}), edge, length)
 end
 
-function exactEdgeLengthKm(edge)
-    ccall((:exactEdgeLengthKm, libh3), Cdouble, (H3Index,), edge)
+function edgeLengthKm(edge, length)
+    ccall((:edgeLengthKm, libh3), H3Error, (H3Index, Ptr{Cdouble}), edge, length)
 end
 
-function exactEdgeLengthM(edge)
-    ccall((:exactEdgeLengthM, libh3), Cdouble, (H3Index,), edge)
+function edgeLengthM(edge, length)
+    ccall((:edgeLengthM, libh3), H3Error, (H3Index, Ptr{Cdouble}), edge, length)
 end
 
-function numHexagons(res)
-    ccall((:numHexagons, libh3), Int64, (Cint,), res)
+function getNumCells(res, out)
+    ccall((:getNumCells, libh3), H3Error, (Cint, Ptr{Int64}), res, out)
 end
 
-# no prototype is found for this function at h3api.h:333:5, please use with caution
-function res0IndexCount()
-    ccall((:res0IndexCount, libh3), Cint, ())
+# no prototype is found for this function at h3api.h:440:14, please use with caution
+function res0CellCount()
+    ccall((:res0CellCount, libh3), Cint, ())
 end
 
-function getRes0Indexes(out)
-    ccall((:getRes0Indexes, libh3), Cvoid, (Ptr{H3Index},), out)
+function getRes0Cells(out)
+    ccall((:getRes0Cells, libh3), H3Error, (Ptr{H3Index},), out)
 end
 
-# no prototype is found for this function at h3api.h:344:5, please use with caution
-function pentagonIndexCount()
-    ccall((:pentagonIndexCount, libh3), Cint, ())
+# no prototype is found for this function at h3api.h:451:14, please use with caution
+function pentagonCount()
+    ccall((:pentagonCount, libh3), Cint, ())
 end
 
-function getPentagonIndexes(res, out)
-    ccall((:getPentagonIndexes, libh3), Cvoid, (Cint, Ptr{H3Index}), res, out)
+function getPentagons(res, out)
+    ccall((:getPentagons, libh3), H3Error, (Cint, Ptr{H3Index}), res, out)
 end
 
-function h3GetResolution(h)
-    ccall((:h3GetResolution, libh3), Cint, (H3Index,), h)
+function getResolution(h)
+    ccall((:getResolution, libh3), Cint, (H3Index,), h)
 end
 
-function h3GetBaseCell(h)
-    ccall((:h3GetBaseCell, libh3), Cint, (H3Index,), h)
+function getBaseCellNumber(h)
+    ccall((:getBaseCellNumber, libh3), Cint, (H3Index,), h)
 end
 
-function stringToH3(str)
-    ccall((:stringToH3, libh3), H3Index, (Ptr{Cchar},), str)
+function stringToH3(str, out)
+    ccall((:stringToH3, libh3), H3Error, (Ptr{Cchar}, Ptr{H3Index}), str, out)
 end
 
 function h3ToString(h, str, sz)
-    ccall((:h3ToString, libh3), Cvoid, (H3Index, Ptr{Cchar}, Csize_t), h, str, sz)
+    ccall((:h3ToString, libh3), H3Error, (H3Index, Ptr{Cchar}, Csize_t), h, str, sz)
 end
 
-function h3IsValid(h)
-    ccall((:h3IsValid, libh3), Cint, (H3Index,), h)
+function isValidCell(h)
+    ccall((:isValidCell, libh3), Cint, (H3Index,), h)
 end
 
-function h3ToParent(h, parentRes)
-    ccall((:h3ToParent, libh3), H3Index, (H3Index, Cint), h, parentRes)
+function cellToParent(h, parentRes, parent)
+    ccall((:cellToParent, libh3), H3Error, (H3Index, Cint, Ptr{H3Index}), h, parentRes, parent)
 end
 
-function maxH3ToChildrenSize(h, childRes)
-    ccall((:maxH3ToChildrenSize, libh3), Cint, (H3Index, Cint), h, childRes)
+function cellToChildrenSize(h, childRes, out)
+    ccall((:cellToChildrenSize, libh3), H3Error, (H3Index, Cint, Ptr{Int64}), h, childRes, out)
 end
 
-function h3ToChildren(h, childRes, children)
-    ccall((:h3ToChildren, libh3), Cvoid, (H3Index, Cint, Ptr{H3Index}), h, childRes, children)
+function cellToChildren(h, childRes, children)
+    ccall((:cellToChildren, libh3), H3Error, (H3Index, Cint, Ptr{H3Index}), h, childRes, children)
 end
 
-function h3ToCenterChild(h, childRes)
-    ccall((:h3ToCenterChild, libh3), H3Index, (H3Index, Cint), h, childRes)
+function cellToCenterChild(h, childRes, child)
+    ccall((:cellToCenterChild, libh3), H3Error, (H3Index, Cint, Ptr{H3Index}), h, childRes, child)
 end
 
-function compact(h3Set, compactedSet, numHexes)
-    ccall((:compact, libh3), Cint, (Ptr{H3Index}, Ptr{H3Index}, Cint), h3Set, compactedSet, numHexes)
+function cellToChildPos(child, parentRes, out)
+    ccall((:cellToChildPos, libh3), H3Error, (H3Index, Cint, Ptr{Int64}), child, parentRes, out)
 end
 
-function maxUncompactSize(compactedSet, numHexes, res)
-    ccall((:maxUncompactSize, libh3), Cint, (Ptr{H3Index}, Cint, Cint), compactedSet, numHexes, res)
+function childPosToCell(childPos, parent, childRes, child)
+    ccall((:childPosToCell, libh3), H3Error, (Int64, H3Index, Cint, Ptr{H3Index}), childPos, parent, childRes, child)
 end
 
-function uncompact(compactedSet, numHexes, h3Set, maxHexes, res)
-    ccall((:uncompact, libh3), Cint, (Ptr{H3Index}, Cint, Ptr{H3Index}, Cint, Cint), compactedSet, numHexes, h3Set, maxHexes, res)
+function compactCells(h3Set, compactedSet, numHexes)
+    ccall((:compactCells, libh3), H3Error, (Ptr{H3Index}, Ptr{H3Index}, Int64), h3Set, compactedSet, numHexes)
 end
 
-function h3IsResClassIII(h)
-    ccall((:h3IsResClassIII, libh3), Cint, (H3Index,), h)
+function uncompactCellsSize(compactedSet, numCompacted, res, out)
+    ccall((:uncompactCellsSize, libh3), H3Error, (Ptr{H3Index}, Int64, Cint, Ptr{Int64}), compactedSet, numCompacted, res, out)
 end
 
-function h3IsPentagon(h)
-    ccall((:h3IsPentagon, libh3), Cint, (H3Index,), h)
+function uncompactCells(compactedSet, numCompacted, outSet, numOut, res)
+    ccall((:uncompactCells, libh3), H3Error, (Ptr{H3Index}, Int64, Ptr{H3Index}, Int64, Cint), compactedSet, numCompacted, outSet, numOut, res)
 end
 
-function maxFaceCount(h3)
-    ccall((:maxFaceCount, libh3), Cint, (H3Index,), h3)
+function isResClassIII(h)
+    ccall((:isResClassIII, libh3), Cint, (H3Index,), h)
 end
 
-function h3GetFaces(h3, out)
-    ccall((:h3GetFaces, libh3), Cvoid, (H3Index, Ptr{Cint}), h3, out)
+function isPentagon(h)
+    ccall((:isPentagon, libh3), Cint, (H3Index,), h)
 end
 
-function h3IndexesAreNeighbors(origin, destination)
-    ccall((:h3IndexesAreNeighbors, libh3), Cint, (H3Index, H3Index), origin, destination)
+function maxFaceCount(h3, out)
+    ccall((:maxFaceCount, libh3), H3Error, (H3Index, Ptr{Cint}), h3, out)
 end
 
-function getH3UnidirectionalEdge(origin, destination)
-    ccall((:getH3UnidirectionalEdge, libh3), H3Index, (H3Index, H3Index), origin, destination)
+function getIcosahedronFaces(h3, out)
+    ccall((:getIcosahedronFaces, libh3), H3Error, (H3Index, Ptr{Cint}), h3, out)
 end
 
-function h3UnidirectionalEdgeIsValid(edge)
-    ccall((:h3UnidirectionalEdgeIsValid, libh3), Cint, (H3Index,), edge)
+function areNeighborCells(origin, destination, out)
+    ccall((:areNeighborCells, libh3), H3Error, (H3Index, H3Index, Ptr{Cint}), origin, destination, out)
 end
 
-function getOriginH3IndexFromUnidirectionalEdge(edge)
-    ccall((:getOriginH3IndexFromUnidirectionalEdge, libh3), H3Index, (H3Index,), edge)
+function cellsToDirectedEdge(origin, destination, out)
+    ccall((:cellsToDirectedEdge, libh3), H3Error, (H3Index, H3Index, Ptr{H3Index}), origin, destination, out)
 end
 
-function getDestinationH3IndexFromUnidirectionalEdge(edge)
-    ccall((:getDestinationH3IndexFromUnidirectionalEdge, libh3), H3Index, (H3Index,), edge)
+function isValidDirectedEdge(edge)
+    ccall((:isValidDirectedEdge, libh3), Cint, (H3Index,), edge)
 end
 
-function getH3IndexesFromUnidirectionalEdge(edge, originDestination)
-    ccall((:getH3IndexesFromUnidirectionalEdge, libh3), Cvoid, (H3Index, Ptr{H3Index}), edge, originDestination)
+function getDirectedEdgeOrigin(edge, out)
+    ccall((:getDirectedEdgeOrigin, libh3), H3Error, (H3Index, Ptr{H3Index}), edge, out)
 end
 
-function getH3UnidirectionalEdgesFromHexagon(origin, edges)
-    ccall((:getH3UnidirectionalEdgesFromHexagon, libh3), Cvoid, (H3Index, Ptr{H3Index}), origin, edges)
+function getDirectedEdgeDestination(edge, out)
+    ccall((:getDirectedEdgeDestination, libh3), H3Error, (H3Index, Ptr{H3Index}), edge, out)
 end
 
-function getH3UnidirectionalEdgeBoundary(edge, gb)
-    ccall((:getH3UnidirectionalEdgeBoundary, libh3), Cvoid, (H3Index, Ptr{GeoBoundary}), edge, gb)
+function directedEdgeToCells(edge, originDestination)
+    ccall((:directedEdgeToCells, libh3), H3Error, (H3Index, Ptr{H3Index}), edge, originDestination)
 end
 
-function h3Distance(origin, h3)
-    ccall((:h3Distance, libh3), Cint, (H3Index, H3Index), origin, h3)
+function originToDirectedEdges(origin, edges)
+    ccall((:originToDirectedEdges, libh3), H3Error, (H3Index, Ptr{H3Index}), origin, edges)
 end
 
-function h3LineSize(start, _end)
-    ccall((:h3LineSize, libh3), Cint, (H3Index, H3Index), start, _end)
+function directedEdgeToBoundary(edge, gb)
+    ccall((:directedEdgeToBoundary, libh3), H3Error, (H3Index, Ptr{CellBoundary}), edge, gb)
 end
 
-function h3Line(start, _end, out)
-    ccall((:h3Line, libh3), Cint, (H3Index, H3Index, Ptr{H3Index}), start, _end, out)
+function cellToVertex(origin, vertexNum, out)
+    ccall((:cellToVertex, libh3), H3Error, (H3Index, Cint, Ptr{H3Index}), origin, vertexNum, out)
 end
 
-function experimentalH3ToLocalIj(origin, h3, out)
-    ccall((:experimentalH3ToLocalIj, libh3), Cint, (H3Index, H3Index, Ptr{CoordIJ}), origin, h3, out)
+function cellToVertexes(origin, vertexes)
+    ccall((:cellToVertexes, libh3), H3Error, (H3Index, Ptr{H3Index}), origin, vertexes)
 end
 
-function experimentalLocalIjToH3(origin, ij, out)
-    ccall((:experimentalLocalIjToH3, libh3), Cint, (H3Index, Ptr{CoordIJ}, Ptr{H3Index}), origin, ij, out)
+function vertexToLatLng(vertex, point)
+    ccall((:vertexToLatLng, libh3), H3Error, (H3Index, Ptr{LatLng}), vertex, point)
+end
+
+function isValidVertex(vertex)
+    ccall((:isValidVertex, libh3), Cint, (H3Index,), vertex)
+end
+
+function gridDistance(origin, h3, distance)
+    ccall((:gridDistance, libh3), H3Error, (H3Index, H3Index, Ptr{Int64}), origin, h3, distance)
+end
+
+function gridPathCellsSize(start, _end, size)
+    ccall((:gridPathCellsSize, libh3), H3Error, (H3Index, H3Index, Ptr{Int64}), start, _end, size)
+end
+
+function gridPathCells(start, _end, out)
+    ccall((:gridPathCells, libh3), H3Error, (H3Index, H3Index, Ptr{H3Index}), start, _end, out)
+end
+
+function cellToLocalIj(origin, h3, mode, out)
+    ccall((:cellToLocalIj, libh3), H3Error, (H3Index, H3Index, UInt32, Ptr{CoordIJ}), origin, h3, mode, out)
+end
+
+function localIjToCell(origin, ij, mode, out)
+    ccall((:localIjToCell, libh3), H3Error, (H3Index, Ptr{CoordIJ}, UInt32, Ptr{H3Index}), origin, ij, mode, out)
 end
 
 @cenum Direction::UInt32 begin
@@ -323,42 +372,48 @@ end
     IJ_AXES_DIGIT = 6
     INVALID_DIGIT = 7
     NUM_DIGITS = 7
+    PENTAGON_SKIPPED_DIGIT = 1
 end
 
-function h3NeighborRotations(origin, dir, rotations)
-    ccall((:h3NeighborRotations, libh3), H3Index, (H3Index, Direction, Ptr{Cint}), origin, dir, rotations)
+function h3NeighborRotations(origin, dir, rotations, out)
+    ccall((:h3NeighborRotations, libh3), H3Error, (H3Index, Direction, Ptr{Cint}, Ptr{H3Index}), origin, dir, rotations, out)
+end
+
+function directionForNeighbor(origin, destination)
+    ccall((:directionForNeighbor, libh3), Direction, (H3Index, H3Index), origin, destination)
 end
 
 function _kRingInternal(origin, k, out, distances, maxIdx, curK)
     ccall((:_kRingInternal, libh3), Cvoid, (H3Index, Cint, Ptr{H3Index}, Ptr{Cint}, Cint, Cint), origin, k, out, distances, maxIdx, curK)
 end
 
+struct VertexNode
+    from::LatLng
+    to::LatLng
+    next::Ptr{VertexNode}
+end
+
 struct VertexGraph
-    buckets::Ptr{Ptr{Cvoid}} # buckets::Ptr{Ptr{VertexNode}}
+    buckets::Ptr{Ptr{VertexNode}}
     numBuckets::Cint
     size::Cint
     res::Cint
 end
 
-function Base.getproperty(x::VertexGraph, f::Symbol)
-    f === :buckets && return Ptr{Ptr{VertexNode}}(getfield(x, f))
-    return getfield(x, f)
-end
-
 function h3SetToVertexGraph(h3Set, numHexes, out)
-    ccall((:h3SetToVertexGraph, libh3), Cvoid, (Ptr{H3Index}, Cint, Ptr{VertexGraph}), h3Set, numHexes, out)
+    ccall((:h3SetToVertexGraph, libh3), H3Error, (Ptr{H3Index}, Cint, Ptr{VertexGraph}), h3Set, numHexes, out)
 end
 
 function _vertexGraphToLinkedGeo(graph, out)
     ccall((:_vertexGraphToLinkedGeo, libh3), Cvoid, (Ptr{VertexGraph}, Ptr{LinkedGeoPolygon}), graph, out)
 end
 
-function _getEdgeHexagons(geofence, numHexagons_, res, numSearchHexes, search, found)
-    ccall((:_getEdgeHexagons, libh3), Cint, (Ptr{Geofence}, Cint, Cint, Ptr{Cint}, Ptr{H3Index}, Ptr{H3Index}), geofence, numHexagons_, res, numSearchHexes, search, found)
+function _getEdgeHexagons(geoloop, numHexagons, res, numSearchHexes, search, found)
+    ccall((:_getEdgeHexagons, libh3), H3Error, (Ptr{GeoLoop}, Int64, Cint, Ptr{Int64}, Ptr{H3Index}, Ptr{H3Index}), geoloop, numHexagons, res, numSearchHexes, search, found)
 end
 
-function _polyfillInternal(geoPolygon, res, out)
-    ccall((:_polyfillInternal, libh3), Cint, (Ptr{GeoPolygon}, Cint, Ptr{H3Index}), geoPolygon, res, out)
+function _gridDiskDistancesInternal(origin, k, out, distances, maxIdx, curK)
+    ccall((:_gridDiskDistancesInternal, libh3), H3Error, (H3Index, Cint, Ptr{H3Index}, Ptr{Cint}, Int64, Cint), origin, k, out, distances, maxIdx, curK)
 end
 
 struct CoordIJK
@@ -426,23 +481,23 @@ function bboxIsTransmeridian(bbox)
 end
 
 function bboxCenter(bbox, center)
-    ccall((:bboxCenter, libh3), Cvoid, (Ptr{BBox}, Ptr{GeoCoord}), bbox, center)
+    ccall((:bboxCenter, libh3), Cvoid, (Ptr{BBox}, Ptr{LatLng}), bbox, center)
 end
 
 function bboxContains(bbox, point)
-    ccall((:bboxContains, libh3), Bool, (Ptr{BBox}, Ptr{GeoCoord}), bbox, point)
+    ccall((:bboxContains, libh3), Bool, (Ptr{BBox}, Ptr{LatLng}), bbox, point)
 end
 
 function bboxEquals(b1, b2)
     ccall((:bboxEquals, libh3), Bool, (Ptr{BBox}, Ptr{BBox}), b1, b2)
 end
 
-function bboxHexEstimate(bbox, res)
-    ccall((:bboxHexEstimate, libh3), Cint, (Ptr{BBox}, Cint), bbox, res)
+function bboxHexEstimate(bbox, res, out)
+    ccall((:bboxHexEstimate, libh3), H3Error, (Ptr{BBox}, Cint, Ptr{Int64}), bbox, res, out)
 end
 
-function lineHexEstimate(origin, destination, res)
-    ccall((:lineHexEstimate, libh3), Cint, (Ptr{GeoCoord}, Ptr{GeoCoord}, Cint), origin, destination, res)
+function lineHexEstimate(origin, destination, res, out)
+    ccall((:lineHexEstimate, libh3), H3Error, (Ptr{LatLng}, Ptr{LatLng}, Cint, Ptr{Int64}), origin, destination, res, out)
 end
 
 function _setIJK(ijk, i, j, k)
@@ -478,12 +533,24 @@ function _ijkScale(c, factor)
     ccall((:_ijkScale, libh3), Cvoid, (Ptr{CoordIJK}, Cint), c, factor)
 end
 
+function _ijkNormalizeCouldOverflow(ijk)
+    ccall((:_ijkNormalizeCouldOverflow, libh3), Bool, (Ptr{CoordIJK},), ijk)
+end
+
 function _ijkNormalize(c)
     ccall((:_ijkNormalize, libh3), Cvoid, (Ptr{CoordIJK},), c)
 end
 
 function _unitIjkToDigit(ijk)
     ccall((:_unitIjkToDigit, libh3), Direction, (Ptr{CoordIJK},), ijk)
+end
+
+function _upAp7Checked(ijk)
+    ccall((:_upAp7Checked, libh3), H3Error, (Ptr{CoordIJK},), ijk)
+end
+
+function _upAp7rChecked(ijk)
+    ccall((:_upAp7rChecked, libh3), H3Error, (Ptr{CoordIJK},), ijk)
 end
 
 function _upAp7(ijk)
@@ -539,7 +606,7 @@ function ijkToIj(ijk, ij)
 end
 
 function ijToIjk(ij, ijk)
-    ccall((:ijToIjk, libh3), Cvoid, (Ptr{CoordIJ}, Ptr{CoordIJK}), ij, ijk)
+    ccall((:ijToIjk, libh3), H3Error, (Ptr{CoordIJ}, Ptr{CoordIJK}), ij, ijk)
 end
 
 function ijkToCube(ijk)
@@ -563,23 +630,23 @@ end
 end
 
 function _geoToFaceIjk(g, res, h)
-    ccall((:_geoToFaceIjk, libh3), Cvoid, (Ptr{GeoCoord}, Cint, Ptr{FaceIJK}), g, res, h)
+    ccall((:_geoToFaceIjk, libh3), Cvoid, (Ptr{LatLng}, Cint, Ptr{FaceIJK}), g, res, h)
 end
 
 function _geoToHex2d(g, res, face, v)
-    ccall((:_geoToHex2d, libh3), Cvoid, (Ptr{GeoCoord}, Cint, Ptr{Cint}, Ptr{Vec2d}), g, res, face, v)
+    ccall((:_geoToHex2d, libh3), Cvoid, (Ptr{LatLng}, Cint, Ptr{Cint}, Ptr{Vec2d}), g, res, face, v)
 end
 
 function _faceIjkToGeo(h, res, g)
-    ccall((:_faceIjkToGeo, libh3), Cvoid, (Ptr{FaceIJK}, Cint, Ptr{GeoCoord}), h, res, g)
+    ccall((:_faceIjkToGeo, libh3), Cvoid, (Ptr{FaceIJK}, Cint, Ptr{LatLng}), h, res, g)
 end
 
-function _faceIjkToGeoBoundary(h, res, start, length, g)
-    ccall((:_faceIjkToGeoBoundary, libh3), Cvoid, (Ptr{FaceIJK}, Cint, Cint, Cint, Ptr{GeoBoundary}), h, res, start, length, g)
+function _faceIjkToCellBoundary(h, res, start, length, g)
+    ccall((:_faceIjkToCellBoundary, libh3), Cvoid, (Ptr{FaceIJK}, Cint, Cint, Cint, Ptr{CellBoundary}), h, res, start, length, g)
 end
 
-function _faceIjkPentToGeoBoundary(h, res, start, length, g)
-    ccall((:_faceIjkPentToGeoBoundary, libh3), Cvoid, (Ptr{FaceIJK}, Cint, Cint, Cint, Ptr{GeoBoundary}), h, res, start, length, g)
+function _faceIjkPentToCellBoundary(h, res, start, length, g)
+    ccall((:_faceIjkPentToCellBoundary, libh3), Cvoid, (Ptr{FaceIJK}, Cint, Cint, Cint, Ptr{CellBoundary}), h, res, start, length, g)
 end
 
 function _faceIjkToVerts(fijk, res, fijkVerts)
@@ -591,7 +658,7 @@ function _faceIjkPentToVerts(fijk, res, fijkVerts)
 end
 
 function _hex2dToGeo(v, face, res, substrate, g)
-    ccall((:_hex2dToGeo, libh3), Cvoid, (Ptr{Vec2d}, Cint, Cint, Cint, Ptr{GeoCoord}), v, face, res, substrate, g)
+    ccall((:_hex2dToGeo, libh3), Cvoid, (Ptr{Vec2d}, Cint, Cint, Cint, Ptr{LatLng}), v, face, res, substrate, g)
 end
 
 function _adjustOverageClassII(fijk, res, pentLeading4, substrate)
@@ -602,48 +669,16 @@ function _adjustPentVertOverage(fijk, res)
     ccall((:_adjustPentVertOverage, libh3), Overage, (Ptr{FaceIJK}, Cint), fijk, res)
 end
 
-function setGeoDegs(p, latDegs, lonDegs)
-    ccall((:setGeoDegs, libh3), Cvoid, (Ptr{GeoCoord}, Cdouble, Cdouble), p, latDegs, lonDegs)
-end
-
-function constrainLat(lat)
-    ccall((:constrainLat, libh3), Cdouble, (Cdouble,), lat)
-end
-
-function constrainLng(lng)
-    ccall((:constrainLng, libh3), Cdouble, (Cdouble,), lng)
-end
-
-function geoAlmostEqual(p1, p2)
-    ccall((:geoAlmostEqual, libh3), Bool, (Ptr{GeoCoord}, Ptr{GeoCoord}), p1, p2)
-end
-
-function geoAlmostEqualThreshold(p1, p2, threshold)
-    ccall((:geoAlmostEqualThreshold, libh3), Bool, (Ptr{GeoCoord}, Ptr{GeoCoord}, Cdouble), p1, p2, threshold)
-end
-
-function _posAngleRads(rads)
-    ccall((:_posAngleRads, libh3), Cdouble, (Cdouble,), rads)
-end
-
-function _setGeoRads(p, latRads, lonRads)
-    ccall((:_setGeoRads, libh3), Cvoid, (Ptr{GeoCoord}, Cdouble, Cdouble), p, latRads, lonRads)
-end
-
-function _geoAzimuthRads(p1, p2)
-    ccall((:_geoAzimuthRads, libh3), Cdouble, (Ptr{GeoCoord}, Ptr{GeoCoord}), p1, p2)
-end
-
-function _geoAzDistanceRads(p1, az, distance, p2)
-    ccall((:_geoAzDistanceRads, libh3), Cvoid, (Ptr{GeoCoord}, Cdouble, Cdouble, Ptr{GeoCoord}), p1, az, distance, p2)
+function _geoToClosestFace(g, face, sqd)
+    ccall((:_geoToClosestFace, libh3), Cvoid, (Ptr{LatLng}, Ptr{Cint}, Ptr{Cdouble}), g, face, sqd)
 end
 
 function setH3Index(h, res, baseCell, initDigit)
     ccall((:setH3Index, libh3), Cvoid, (Ptr{H3Index}, Cint, Cint, Direction), h, res, baseCell, initDigit)
 end
 
-function isResClassIII(res)
-    ccall((:isResClassIII, libh3), Cint, (Cint,), res)
+function isResolutionClassIII(r)
+    ccall((:isResolutionClassIII, libh3), Cint, (Cint,), r)
 end
 
 function _h3ToFaceIjkWithInitializedFijk(h, fijk)
@@ -651,7 +686,7 @@ function _h3ToFaceIjkWithInitializedFijk(h, fijk)
 end
 
 function _h3ToFaceIjk(h, fijk)
-    ccall((:_h3ToFaceIjk, libh3), Cvoid, (H3Index, Ptr{FaceIJK}), h, fijk)
+    ccall((:_h3ToFaceIjk, libh3), H3Error, (H3Index, Ptr{FaceIJK}), h, fijk)
 end
 
 function _faceIjkToH3(fijk, res)
@@ -678,8 +713,81 @@ function _h3Rotate60cw(h)
     ccall((:_h3Rotate60cw, libh3), H3Index, (H3Index,), h)
 end
 
+function _zeroIndexDigits(h, start, _end)
+    ccall((:_zeroIndexDigits, libh3), H3Index, (H3Index, Cint, Cint), h, start, _end)
+end
+
+struct IterCellsChildren
+    h::H3Index
+    _parentRes::Cint
+    _skipDigit::Cint
+end
+
+function iterInitParent(h, childRes)
+    ccall((:iterInitParent, libh3), IterCellsChildren, (H3Index, Cint), h, childRes)
+end
+
+function iterInitBaseCellNum(baseCellNum, childRes)
+    ccall((:iterInitBaseCellNum, libh3), IterCellsChildren, (Cint, Cint), baseCellNum, childRes)
+end
+
+function iterStepChild(iter)
+    ccall((:iterStepChild, libh3), Cvoid, (Ptr{IterCellsChildren},), iter)
+end
+
+struct IterCellsResolution
+    h::H3Index
+    _baseCellNum::Cint
+    _res::Cint
+    _itC::IterCellsChildren
+end
+
+function iterInitRes(res)
+    ccall((:iterInitRes, libh3), IterCellsResolution, (Cint,), res)
+end
+
+function iterStepRes(iter)
+    ccall((:iterStepRes, libh3), Cvoid, (Ptr{IterCellsResolution},), iter)
+end
+
+function setGeoDegs(p, latDegs, lngDegs)
+    ccall((:setGeoDegs, libh3), Cvoid, (Ptr{LatLng}, Cdouble, Cdouble), p, latDegs, lngDegs)
+end
+
+function constrainLat(lat)
+    ccall((:constrainLat, libh3), Cdouble, (Cdouble,), lat)
+end
+
+function constrainLng(lng)
+    ccall((:constrainLng, libh3), Cdouble, (Cdouble,), lng)
+end
+
+function geoAlmostEqual(p1, p2)
+    ccall((:geoAlmostEqual, libh3), Bool, (Ptr{LatLng}, Ptr{LatLng}), p1, p2)
+end
+
+function geoAlmostEqualThreshold(p1, p2, threshold)
+    ccall((:geoAlmostEqualThreshold, libh3), Bool, (Ptr{LatLng}, Ptr{LatLng}, Cdouble), p1, p2, threshold)
+end
+
+function _posAngleRads(rads)
+    ccall((:_posAngleRads, libh3), Cdouble, (Cdouble,), rads)
+end
+
+function _setGeoRads(p, latRads, lngRads)
+    ccall((:_setGeoRads, libh3), Cvoid, (Ptr{LatLng}, Cdouble, Cdouble), p, latRads, lngRads)
+end
+
+function _geoAzimuthRads(p1, p2)
+    ccall((:_geoAzimuthRads, libh3), Cdouble, (Ptr{LatLng}, Ptr{LatLng}), p1, p2)
+end
+
+function _geoAzDistanceRads(p1, az, distance, p2)
+    ccall((:_geoAzDistanceRads, libh3), Cvoid, (Ptr{LatLng}, Cdouble, Cdouble, Ptr{LatLng}), p1, az, distance, p2)
+end
+
 function normalizeMultiPolygon(root)
-    ccall((:normalizeMultiPolygon, libh3), Cint, (Ptr{LinkedGeoPolygon},), root)
+    ccall((:normalizeMultiPolygon, libh3), H3Error, (Ptr{LinkedGeoPolygon},), root)
 end
 
 function addNewLinkedPolygon(polygon)
@@ -695,7 +803,7 @@ function addLinkedLoop(polygon, loop)
 end
 
 function addLinkedCoord(loop, vertex)
-    ccall((:addLinkedCoord, libh3), Ptr{LinkedGeoCoord}, (Ptr{LinkedGeoLoop}, Ptr{GeoCoord}), loop, vertex)
+    ccall((:addLinkedCoord, libh3), Ptr{LinkedLatLng}, (Ptr{LinkedGeoLoop}, Ptr{LatLng}), loop, vertex)
 end
 
 function countLinkedPolygons(polygon)
@@ -719,23 +827,23 @@ function bboxFromLinkedGeoLoop(loop, bbox)
 end
 
 function pointInsideLinkedGeoLoop(loop, bbox, coord)
-    ccall((:pointInsideLinkedGeoLoop, libh3), Bool, (Ptr{LinkedGeoLoop}, Ptr{BBox}, Ptr{GeoCoord}), loop, bbox, coord)
+    ccall((:pointInsideLinkedGeoLoop, libh3), Bool, (Ptr{LinkedGeoLoop}, Ptr{BBox}, Ptr{LatLng}), loop, bbox, coord)
 end
 
 function isClockwiseLinkedGeoLoop(loop)
     ccall((:isClockwiseLinkedGeoLoop, libh3), Bool, (Ptr{LinkedGeoLoop},), loop)
 end
 
-function h3ToLocalIjk(origin, h3, out)
-    ccall((:h3ToLocalIjk, libh3), Cint, (H3Index, H3Index, Ptr{CoordIJK}), origin, h3, out)
+function cellToLocalIjk(origin, h3, out)
+    ccall((:cellToLocalIjk, libh3), H3Error, (H3Index, H3Index, Ptr{CoordIJK}), origin, h3, out)
 end
 
-function localIjkToH3(origin, ijk, out)
-    ccall((:localIjkToH3, libh3), Cint, (H3Index, Ptr{CoordIJK}, Ptr{H3Index}), origin, ijk, out)
+function localIjkToCell(origin, ijk, out)
+    ccall((:localIjkToCell, libh3), H3Error, (H3Index, Ptr{CoordIJK}, Ptr{H3Index}), origin, ijk, out)
 end
 
 function _ipow(base, exp)
-    ccall((:_ipow, libh3), Cint, (Cint, Cint), base, exp)
+    ccall((:_ipow, libh3), Int64, (Int64, Int64), base, exp)
 end
 
 function bboxesFromGeoPolygon(polygon, bboxes)
@@ -743,19 +851,19 @@ function bboxesFromGeoPolygon(polygon, bboxes)
 end
 
 function pointInsidePolygon(geoPolygon, bboxes, coord)
-    ccall((:pointInsidePolygon, libh3), Bool, (Ptr{GeoPolygon}, Ptr{BBox}, Ptr{GeoCoord}), geoPolygon, bboxes, coord)
+    ccall((:pointInsidePolygon, libh3), Bool, (Ptr{GeoPolygon}, Ptr{BBox}, Ptr{LatLng}), geoPolygon, bboxes, coord)
 end
 
-function bboxFromGeofence(loop, bbox)
-    ccall((:bboxFromGeofence, libh3), Cvoid, (Ptr{Geofence}, Ptr{BBox}), loop, bbox)
+function bboxFromGeoLoop(loop, bbox)
+    ccall((:bboxFromGeoLoop, libh3), Cvoid, (Ptr{GeoLoop}, Ptr{BBox}), loop, bbox)
 end
 
-function pointInsideGeofence(loop, bbox, coord)
-    ccall((:pointInsideGeofence, libh3), Bool, (Ptr{Geofence}, Ptr{BBox}, Ptr{GeoCoord}), loop, bbox, coord)
+function pointInsideGeoLoop(loop, bbox, coord)
+    ccall((:pointInsideGeoLoop, libh3), Bool, (Ptr{GeoLoop}, Ptr{BBox}, Ptr{LatLng}), loop, bbox, coord)
 end
 
-function isClockwiseGeofence(geofence)
-    ccall((:isClockwiseGeofence, libh3), Bool, (Ptr{Geofence},), geofence)
+function isClockwiseGeoLoop(geoloop)
+    ccall((:isClockwiseGeoLoop, libh3), Bool, (Ptr{GeoLoop},), geoloop)
 end
 
 function _v2dMag(v)
@@ -766,8 +874,8 @@ function _v2dIntersect(p0, p1, p2, p3, inter)
     ccall((:_v2dIntersect, libh3), Cvoid, (Ptr{Vec2d}, Ptr{Vec2d}, Ptr{Vec2d}, Ptr{Vec2d}, Ptr{Vec2d}), p0, p1, p2, p3, inter)
 end
 
-function _v2dEquals(p0, p1)
-    ccall((:_v2dEquals, libh3), Bool, (Ptr{Vec2d}, Ptr{Vec2d}), p0, p1)
+function _v2dAlmostEquals(p0, p1)
+    ccall((:_v2dAlmostEquals, libh3), Bool, (Ptr{Vec2d}, Ptr{Vec2d}), p0, p1)
 end
 
 struct Vec3d
@@ -777,7 +885,7 @@ struct Vec3d
 end
 
 function _geoToVec3d(geo, point)
-    ccall((:_geoToVec3d, libh3), Cvoid, (Ptr{GeoCoord}, Ptr{Vec3d}), geo, point)
+    ccall((:_geoToVec3d, libh3), Cvoid, (Ptr{LatLng}, Ptr{Vec3d}), geo, point)
 end
 
 function _pointSquareDist(p1, p2)
@@ -789,18 +897,12 @@ struct PentagonDirectionFaces
     faces::NTuple{5, Cint}
 end
 
-function vertexRotations(cell)
-    ccall((:vertexRotations, libh3), Cint, (H3Index,), cell)
-end
-
 function vertexNumForDirection(origin, direction)
     ccall((:vertexNumForDirection, libh3), Cint, (H3Index, Direction), origin, direction)
 end
 
-struct VertexNode
-    from::GeoCoord
-    to::GeoCoord
-    next::Ptr{VertexNode}
+function directionForVertexNum(origin, vertexNum)
+    ccall((:directionForVertexNum, libh3), Direction, (H3Index, Cint), origin, vertexNum)
 end
 
 function initVertexGraph(graph, numBuckets, res)
@@ -812,7 +914,7 @@ function destroyVertexGraph(graph)
 end
 
 function addVertexNode(graph, fromVtx, toVtx)
-    ccall((:addVertexNode, libh3), Ptr{VertexNode}, (Ptr{VertexGraph}, Ptr{GeoCoord}, Ptr{GeoCoord}), graph, fromVtx, toVtx)
+    ccall((:addVertexNode, libh3), Ptr{VertexNode}, (Ptr{VertexGraph}, Ptr{LatLng}, Ptr{LatLng}), graph, fromVtx, toVtx)
 end
 
 function removeVertexNode(graph, node)
@@ -820,11 +922,11 @@ function removeVertexNode(graph, node)
 end
 
 function findNodeForEdge(graph, fromVtx, toVtx)
-    ccall((:findNodeForEdge, libh3), Ptr{VertexNode}, (Ptr{VertexGraph}, Ptr{GeoCoord}, Ptr{GeoCoord}), graph, fromVtx, toVtx)
+    ccall((:findNodeForEdge, libh3), Ptr{VertexNode}, (Ptr{VertexGraph}, Ptr{LatLng}, Ptr{LatLng}), graph, fromVtx, toVtx)
 end
 
 function findNodeForVertex(graph, fromVtx)
-    ccall((:findNodeForVertex, libh3), Ptr{VertexNode}, (Ptr{VertexGraph}, Ptr{GeoCoord}), graph, fromVtx)
+    ccall((:findNodeForVertex, libh3), Ptr{VertexNode}, (Ptr{VertexGraph}, Ptr{LatLng}), graph, fromVtx)
 end
 
 function firstVertexNode(graph)
@@ -832,18 +934,22 @@ function firstVertexNode(graph)
 end
 
 function _hashVertex(vertex, res, numBuckets)
-    ccall((:_hashVertex, libh3), UInt32, (Ptr{GeoCoord}, Cint, Cint), vertex, res, numBuckets)
+    ccall((:_hashVertex, libh3), UInt32, (Ptr{LatLng}, Cint, Cint), vertex, res, numBuckets)
 end
 
 function _initVertexNode(node, fromVtx, toVtx)
-    ccall((:_initVertexNode, libh3), Cvoid, (Ptr{VertexNode}, Ptr{GeoCoord}, Ptr{GeoCoord}), node, fromVtx, toVtx)
+    ccall((:_initVertexNode, libh3), Cvoid, (Ptr{VertexNode}, Ptr{LatLng}, Ptr{LatLng}), node, fromVtx, toVtx)
 end
 
-const H3_VERSION_MAJOR = 3
+const DECLSPEC = nothing
 
-const H3_VERSION_MINOR = 7
+const H3_NULL = 0
 
-const H3_VERSION_PATCH = 2
+const H3_VERSION_MAJOR = 4
+
+const H3_VERSION_MINOR = 1
+
+const H3_VERSION_PATCH = 0
 
 const MAX_CELL_BNDRY_VERTS = 10
 
@@ -863,9 +969,13 @@ const NUM_PENT_VERTS = 5
 
 const NUM_PENTAGONS = 12
 
-const H3_HEXAGON_MODE = 1
+const H3_CELL_MODE = 1
 
-const H3_UNIEDGE_MODE = 2
+const H3_DIRECTEDEDGE_MODE = 2
+
+const H3_EDGE_MODE = 3
+
+const H3_VERTEX_MODE = 4
 
 const INVALID_BASE_CELL = 127
 
@@ -880,8 +990,6 @@ const KI = 2
 const JK = 3
 
 const INVALID_FACE = -1
-
-const EPSILON_DEG = 1.0e-9
 
 const H3_NUM_BITS = 64
 
@@ -923,21 +1031,7 @@ const H3_DIGIT_MASK_NEGATIVE = ~H3_DIGIT_MASK
 
 const H3_INIT = UINT64_C(35184372088831)
 
-const H3_NULL = 0
-
-const COMPACT_SUCCESS = 0
-
-const COMPACT_LOOP_EXCEEDED = -1
-
-const COMPACT_DUPLICATE = -2
-
-const COMPACT_ALLOC_FAILED = -3
-
-const NORMALIZATION_SUCCESS = 0
-
-const NORMALIZATION_ERR_MULTIPLE_POLYGONS = 1
-
-const NORMALIZATION_ERR_UNASSIGNED_HOLES = 2
+const EPSILON_DEG = 1.0e-9
 
 const INVALID_VERTEX_NUM = -1
 

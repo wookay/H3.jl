@@ -2,13 +2,13 @@ module test_h3_lib_unidirectional_edges
 
 using H3.Lib
 
-Lib.h3IndexesAreNeighbors
-Lib.getH3UnidirectionalEdge
-Lib.h3UnidirectionalEdgeIsValid
-Lib.getOriginH3IndexFromUnidirectionalEdge
-Lib.getDestinationH3IndexFromUnidirectionalEdge
-Lib.getH3IndexesFromUnidirectionalEdge
-Lib.getH3UnidirectionalEdgesFromHexagon
-Lib.getH3UnidirectionalEdgeBoundary
+Lib.areNeighborCells
+Lib.cellsToDirectedEdge
+Lib.isValidDirectedEdge
+Lib.getDirectedEdgeOrigin
+Lib.getDirectedEdgeDestination
+Lib.directedEdgeToCells
+Lib.originToDirectedEdges
+Lib.directedEdgeToBoundary
 
 end # module test_h3_lib_unidirectional_edges

@@ -6,7 +6,7 @@ using H3_jll
 const h3api_dir = normpath(H3_jll.find_artifact_dir(), "include/h3")
 const h3api_header = normpath(h3api_dir, "h3api.h")
 
-const H3_VERSION = v"3.7.2"
+const H3_VERSION = v"4.1.0"
 const h3_dir = normpath(@__DIR__, "h3-$H3_VERSION")
 !isdir(h3_dir) && throw(string("need ", h3_dir))
 const h3_include_dir = normpath(h3_dir, "src/h3lib/include")
