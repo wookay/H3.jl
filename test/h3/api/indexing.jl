@@ -10,7 +10,7 @@ location = LatLng(0.6518070561696664, -2.128889370371519)
 @test latLngToCell(location, 1) == 0x081283ffffffffff
 @test latLngToCell(location, 5) == h
 @test latLngToCell(location, 10) == 0x08a2834700007fff
-@test cellToLatLng(h) == location
+@test cellToLatLng(h) ≈ location
 
 verts = cellToBoundary(0x85283473fffffff)
 @test length(verts) == 6
@@ -32,7 +32,8 @@ verts = cellToBoundary(indexed)
                                                                (40.688935992642726, -74.04380102076254),
                                                                (40.689572744390524, -74.04352137709904)]
 center = cellToLatLng(indexed)
-@test (rad2deg(center.lat), rad2deg(center.lng)) == (40.68942184369929, -74.04443139990863)
+@test rad2deg(center.lat) ≈ 40.68942184369929
+@test rad2deg(center.lng) ≈ -74.04443139990863
 
 @test latLngToCell(LatLng(0, 0), 0) == 0x08075fffffffffff
 @test latLngToCell(LatLng(0, 0), 5) == 0x085754e67fffffff

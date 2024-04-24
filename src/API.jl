@@ -925,4 +925,20 @@ function Base.isapprox(A::Vector{Tuple{Float64,Float64}}, B::Vector{Tuple{Float6
     return true
 end
 
+function Base.isapprox(a::Vec2d, b::Vec2d)
+    return isapprox(a.x, b.x) &&
+           isapprox(a.y, b.y)
+end
+
+function Base.isapprox(a::Vec3d, b::Vec3d)
+    return isapprox(a.x, b.x) &&
+           isapprox(a.y, b.y) &&
+           isapprox(a.z, b.z)
+end
+
+function Base.isapprox(a::LatLng, b::LatLng)
+    return isapprox(a.lat, b.lat) &&
+           isapprox(a.lng, b.lng)
+end
+
 end # module H3.API
