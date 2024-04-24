@@ -19,7 +19,7 @@ export cellToParent, cellToChildren, cellToChildrenSize, compactCells, uncompact
 export areNeighborCells, cellsToDirectedEdge, isValidDirectedEdge, getDirectedEdgeOrigin, getDirectedEdgeDestination, directedEdgeToCells, originToDirectedEdges, directedEdgeToBoundary
 
 # Miscellaneous H3 functions
-export hexAreaKm2, hexAreaM2, edgeLengthKm, edgeLengthM, getNumCells, getRes0Cells, res0CellCount
+export hexAreaKm2, hexAreaM2, cellAreaRads2, cellAreaKm2, cellAreaM2, edgeLengthKm, edgeLengthM, getNumCells, getRes0Cells, res0CellCount
 
 # Coordinate Systems
 export ijToIjk, ijkToHex2d, ijkToIj, ijkDistance, ijkNormalize, cellToLocalIjk, h3ToFaceIjk, localIjkToCell, faceIjkToH3, hex2dToCoordIJK, geoToVec3d, geoToFaceIjk
@@ -620,6 +620,39 @@ Average hexagon area in square meters at the given resolution.
 """
 function hexAreaM2(res::Int)::Cdouble
     Lib.hexAreaM2(res)
+end
+
+"""
+    cellAreaRads2(cell::H3Index)::Cdouble
+
+Exact area of specific cell in square radiants.
+"""
+function cellAreaRads2(cell::H3Index)::Cdouble
+    out = Ref{Cdouble}()
+    Lib.cellAreaRads2(cell, out)
+    out[]
+end
+
+"""
+    cellAreaKm2(cell::H3Index)::Cdouble
+
+Exact area of specific cell in square kilometers.
+"""
+function cellAreaKm2(cell::H3Index)::Cdouble
+    out = Ref{Cdouble}()
+    Lib.cellAreaKm2(cell, out)
+    out[]
+end
+
+"""
+    cellAreaM2(res::Int)::Cdouble
+
+Exact area of specific cell in square meters.
+"""
+function cellAreaM2(cell::H3Index)::Cdouble
+    out = Ref{Cdouble}()
+    Lib.cellAreaM2(cell, out)
+    out[]
 end
 
 """
