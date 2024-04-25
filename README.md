@@ -4,7 +4,7 @@
 |:-----------------------------------------:|:------------------------------------------------------------------:|
 |  [![][docs-latest-img]][docs-latest-url]  |  [![][actions-img]][actions-url]  [![][codecov-img]][codecov-url]  |
 
-`H3.jl` provides a Julia version of H3, Hexagonal hierarchical geospatial indexing system. https://github.com/uber/h3
+`H3.jl` provides Julia bindings to [h3](https://github.com/uber/h3), a hexagonal, hierarchical geospatial indexing system.  See the source code for the underlying C library at https://github.com/uber/h3.
 
 ```julia
 using H3.API
