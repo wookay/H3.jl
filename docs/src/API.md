@@ -65,6 +65,9 @@ directedEdgeToBoundary
 ```@docs
 hexAreaKm2
 hexAreaM2
+cellAreaRads2
+cellAreaKm2
+cellAreaM2
 edgeLengthKm
 edgeLengthM
 getNumCells
