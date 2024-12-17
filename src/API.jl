@@ -18,6 +18,9 @@ export cellToParent, cellToChildren, cellToChildrenSize, compactCells, uncompact
 # Unidirectional edge functions
 export areNeighborCells, cellsToDirectedEdge, isValidDirectedEdge, getDirectedEdgeOrigin, getDirectedEdgeDestination, directedEdgeToCells, originToDirectedEdges, directedEdgeToBoundary
 
+# Vertex functions
+export getNumVertexes, cellToVertex, cellToVertexes, vertexToLatLng, isValidVertex
+
 # Miscellaneous H3 functions
 export hexAreaKm2, hexAreaM2, cellAreaRads2, cellAreaKm2, cellAreaM2, edgeLengthKm, edgeLengthM, getNumCells, getRes0Cells, res0CellCount
 
@@ -601,6 +604,95 @@ function directedEdgeToBoundary(edge::H3Index)::Vector{LatLng}
     collect(verts)
 end
 
+# Vertex functions
+
+"""
+    getNumVertexes(cell::H3Index)::Int
+
+Provides the number of vertexes for the `cell`.
+@param cell H3Index of cell
+"""
+function getNumVertexes(cell::H3Index)::Int
+    if isPentagon(cell) == true
+        num_vertexes = 5
+    else # It's a Hexagon.
+        num_vertexes = 6
+    end
+    return num_vertexes
+end
+
+"""
+    cellToVertex(cell::H3Index,vertex_num::Integer)::H3Index
+
+Provides the `H3Index` for the specified `cell` and `vertex_num`.
+`vertex_num` is 1-6 for hexagonal cells, 1-5 for pentagonal cells.
+@param cell H3Index of cell
+@param vertex_num vertex number of cell, starting at 1
+"""
+function cellToVertex(cell::H3Index,vertex_num::Integer)::H3Index
+
+    num_vertexes = getNumVertexes(cell)
+
+    @assert (vertex_num >= 1) && (vertex_num <= num_vertexes)
+
+    vertexNum = vertex_num - 1      # Convert to 0 base.
+
+    vertex_index = Ref{H3Index}()   # Allocate an `H3Index`
+    Lib.cellToVertex(cell,Cint(vertexNum),vertex_index)
+    return vertex_index[]           # Return `H3Index` value.
+end
+
+"""
+    cellToVertexes(cell::H3Index)::Vector{H3Index}
+
+Provides the vertexes for `cell`.
+@param cell H3Index of cell to get vertexes of
+"""
+function cellToVertexes(cell::H3Index)::Vector{H3Index}
+
+    num_vertexes = getNumVertexes(cell)
+
+    vertex_indexes = Vector{H3Index}(undef,num_vertexes)
+    Lib.cellToVertexes(cell,vertex_indexes)
+    return vertex_indexes
+end
+
+"""
+    vertexToLatLng(vertex::H3Index)::LatLng
+
+Provides the `LatLng` for `vertex`.
+@param vertex H3Index of vertex
+"""
+function vertexToLatLng(vertex::H3Index)::LatLng
+
+    @assert isValidVertex(vertex) == true
+
+    point = Ref{LatLng}()           # Allocate a `LatLng`.
+
+    Lib.vertexToLatLng(vertex,point)
+
+    return point[]
+end
+
+"""
+    isValidVertex(vertex::H3Index)::Bool
+
+Determines whether `vertex` is a valid vertex
+(e.g., as opposed to a cell).
+@param vertex H3Index of candidate vertex
+"""
+function isValidVertex(vertex::H3Index)::Bool
+
+    # Convert from (0,1) result to (false,true) result.
+    if Lib.isValidVertex(vertex) == 0
+        is_valid = false
+    else
+        is_valid = true
+    end
+
+    return is_valid
+
+end
 
 # Miscellaneous H3 functions
 
