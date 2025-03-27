@@ -42,15 +42,18 @@ using .Lib: H3Error
 #   - https://h3geo.org/docs/library/errors/
 ###
 
-# errors
+# Error handling
 """
-The type returned by most H3 functions is H3Error, a 32 bit integer type with the following properties:
+The type returned by most H3 functions is `H3Error`,
+a 32 bit integer type with the following properties:
 
-H3Error will be an integer type of 32 bits, i.e. uint32_t.
-H3Error with value 0 indicates success (no error).
-No H3Error value will set the most significant bit.
-As a result of these properties, no H3Error value will set the bits that correspond with the Mode bit field in an H3Index.
-32 bit return codes with the high bit never set allows for mixing error codes and resulting indexes if desired by the application, after copying the error codes into the result buffer.
+- `H3Error` will be an integer type of 32 bits, i.e. `uint32_t`.
+- `H3Error` with value 0 indicates success (no error).
+- No `H3Error` value will set the most significant bit.
+- As a result of these properties, no `H3Error` value will set the bits that correspond with the Mode bit field in an `H3Index`.
+
+Table of error codes
+<https://h3geo.org/docs/library/errors/#table-of-error-codes>
 """
 struct H3ErrorCode
     value::H3Error
