@@ -5,6 +5,11 @@
     - [https://h3geo.org/docs/](https://h3geo.org/docs/)
     - [https://github.com/uber/h3/blob/master/src/h3lib/include/h3api.h.in](https://github.com/uber/h3/blob/master/src/h3lib/include/h3api.h.in)
 
+# Error handling
+```@docs
+H3ErrorCode
+```
+
 # Indexing functions
 ```@docs
 latLngToCell
@@ -63,8 +68,6 @@ directedEdgeToBoundary
 
 # Miscellaneous H3 functions
 ```@docs
-hexAreaKm2
-hexAreaM2
 cellAreaRads2
 cellAreaKm2
 cellAreaM2

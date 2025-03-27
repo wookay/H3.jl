@@ -3,9 +3,10 @@ module Lib
 using H3_jll
 export H3_jll
 
-using CEnum
+using CEnum: CEnum, @cenum
 
 const uint64_t = UInt64
+const uint32_t = UInt32
 const UINT64_C = UInt64
 
 
@@ -32,6 +33,10 @@ const H3Error = UInt32
     E_OPTION_INVALID = 15
 end
 
+function describeH3Error(err)
+    ccall((:describeH3Error, libh3), Ptr{Cchar}, (H3Error,), err)
+end
+
 struct LatLng
     lat::Cdouble
     lng::Cdouble
@@ -56,6 +61,14 @@ end
 struct GeoMultiPolygon
     numPolygons::Cint
     polygons::Ptr{GeoPolygon}
+end
+
+@cenum ContainmentMode::UInt32 begin
+    CONTAINMENT_CENTER = 0
+    CONTAINMENT_FULL = 1
+    CONTAINMENT_OVERLAPPING = 2
+    CONTAINMENT_OVERLAPPING_BBOX = 3
+    CONTAINMENT_INVALID = 4
 end
 
 struct LinkedLatLng
@@ -132,6 +145,14 @@ function polygonToCells(geoPolygon, res, flags, out)
     ccall((:polygonToCells, libh3), H3Error, (Ptr{GeoPolygon}, Cint, UInt32, Ptr{H3Index}), geoPolygon, res, flags, out)
 end
 
+function maxPolygonToCellsSizeExperimental(polygon, res, flags, out)
+    ccall((:maxPolygonToCellsSizeExperimental, libh3), H3Error, (Ptr{GeoPolygon}, Cint, UInt32, Ptr{Int64}), polygon, res, flags, out)
+end
+
+function polygonToCellsExperimental(polygon, res, flags, size, out)
+    ccall((:polygonToCellsExperimental, libh3), H3Error, (Ptr{GeoPolygon}, Cint, UInt32, Int64, Ptr{H3Index}), polygon, res, flags, size, out)
+end
+
 function cellsToLinkedMultiPolygon(h3Set, numHexes, out)
     ccall((:cellsToLinkedMultiPolygon, libh3), H3Error, (Ptr{H3Index}, Cint, Ptr{LinkedGeoPolygon}), h3Set, numHexes, out)
 end
@@ -204,7 +225,6 @@ function getNumCells(res, out)
     ccall((:getNumCells, libh3), H3Error, (Cint, Ptr{Int64}), res, out)
 end
 
-# no prototype is found for this function at h3api.h:440:14, please use with caution
 function res0CellCount()
     ccall((:res0CellCount, libh3), Cint, ())
 end
@@ -213,7 +233,6 @@ function getRes0Cells(out)
     ccall((:getRes0Cells, libh3), H3Error, (Ptr{H3Index},), out)
 end
 
-# no prototype is found for this function at h3api.h:451:14, please use with caution
 function pentagonCount()
     ccall((:pentagonCount, libh3), Cint, ())
 end
@@ -476,6 +495,14 @@ struct BBox
     west::Cdouble
 end
 
+function bboxWidthRads(bbox)
+    ccall((:bboxWidthRads, libh3), Cdouble, (Ptr{BBox},), bbox)
+end
+
+function bboxHeightRads(bbox)
+    ccall((:bboxHeightRads, libh3), Cdouble, (Ptr{BBox},), bbox)
+end
+
 function bboxIsTransmeridian(bbox)
     ccall((:bboxIsTransmeridian, libh3), Bool, (Ptr{BBox},), bbox)
 end
@@ -488,8 +515,20 @@ function bboxContains(bbox, point)
     ccall((:bboxContains, libh3), Bool, (Ptr{BBox}, Ptr{LatLng}), bbox, point)
 end
 
+function bboxContainsBBox(a, b)
+    ccall((:bboxContainsBBox, libh3), Bool, (Ptr{BBox}, Ptr{BBox}), a, b)
+end
+
+function bboxOverlapsBBox(a, b)
+    ccall((:bboxOverlapsBBox, libh3), Bool, (Ptr{BBox}, Ptr{BBox}), a, b)
+end
+
 function bboxEquals(b1, b2)
     ccall((:bboxEquals, libh3), Bool, (Ptr{BBox}, Ptr{BBox}), b1, b2)
+end
+
+function bboxToCellBoundary(bbox)
+    ccall((:bboxToCellBoundary, libh3), CellBoundary, (Ptr{BBox},), bbox)
 end
 
 function bboxHexEstimate(bbox, res, out)
@@ -498,6 +537,20 @@ end
 
 function lineHexEstimate(origin, destination, res, out)
     ccall((:lineHexEstimate, libh3), H3Error, (Ptr{LatLng}, Ptr{LatLng}, Cint, Ptr{Int64}), origin, destination, res, out)
+end
+
+function scaleBBox(bbox, scale)
+    ccall((:scaleBBox, libh3), Cvoid, (Ptr{BBox}, Cdouble), bbox, scale)
+end
+
+@cenum LongitudeNormalization::UInt32 begin
+    NORMALIZE_NONE = 0
+    NORMALIZE_EAST = 1
+    NORMALIZE_WEST = 2
+end
+
+function bboxNormalization(a, b, aNormalization, bNormalization)
+    ccall((:bboxNormalization, libh3), Cvoid, (Ptr{BBox}, Ptr{BBox}, Ptr{LongitudeNormalization}, Ptr{LongitudeNormalization}), a, b, aNormalization, bNormalization)
 end
 
 function _setIJK(ijk, i, j, k)
@@ -727,6 +780,10 @@ function iterInitParent(h, childRes)
     ccall((:iterInitParent, libh3), IterCellsChildren, (H3Index, Cint), h, childRes)
 end
 
+function _iterInitParent(h, childRes, iter)
+    ccall((:_iterInitParent, libh3), Cvoid, (H3Index, Cint, Ptr{IterCellsChildren}), h, childRes, iter)
+end
+
 function iterInitBaseCellNum(baseCellNum, childRes)
     ccall((:iterInitBaseCellNum, libh3), IterCellsChildren, (Cint, Cint), baseCellNum, childRes)
 end
@@ -760,6 +817,10 @@ end
 
 function constrainLng(lng)
     ccall((:constrainLng, libh3), Cdouble, (Cdouble,), lng)
+end
+
+function normalizeLng(lng, normalization)
+    ccall((:normalizeLng, libh3), Cdouble, (Cdouble, LongitudeNormalization), lng, normalization)
 end
 
 function geoAlmostEqual(p1, p2)
@@ -842,8 +903,69 @@ function localIjkToCell(origin, ijk, out)
     ccall((:localIjkToCell, libh3), H3Error, (H3Index, Ptr{CoordIJK}, Ptr{H3Index}), origin, ijk, out)
 end
 
+function ADD_INT32S_OVERFLOWS(a, b)
+    ccall((:ADD_INT32S_OVERFLOWS, libh3), Bool, (Int32, Int32), a, b)
+end
+
+function SUB_INT32S_OVERFLOWS(a, b)
+    ccall((:SUB_INT32S_OVERFLOWS, libh3), Bool, (Int32, Int32), a, b)
+end
+
 function _ipow(base, exp)
     ccall((:_ipow, libh3), Int64, (Int64, Int64), base, exp)
+end
+
+struct IterCellsPolygonCompact
+    cell::H3Index
+    error::H3Error
+    _res::Cint
+    _flags::UInt32
+    _polygon::Ptr{GeoPolygon}
+    _bboxes::Ptr{BBox}
+    _started::Bool
+end
+
+function iterInitPolygonCompact(polygon, res, flags)
+    ccall((:iterInitPolygonCompact, libh3), IterCellsPolygonCompact, (Ptr{GeoPolygon}, Cint, UInt32), polygon, res, flags)
+end
+
+function iterStepPolygonCompact(iter)
+    ccall((:iterStepPolygonCompact, libh3), Cvoid, (Ptr{IterCellsPolygonCompact},), iter)
+end
+
+function iterDestroyPolygonCompact(iter)
+    ccall((:iterDestroyPolygonCompact, libh3), Cvoid, (Ptr{IterCellsPolygonCompact},), iter)
+end
+
+struct IterCellsPolygon
+    cell::H3Index
+    error::H3Error
+    _cellIter::IterCellsPolygonCompact
+    _childIter::IterCellsChildren
+end
+
+function iterInitPolygon(polygon, res, flags)
+    ccall((:iterInitPolygon, libh3), IterCellsPolygon, (Ptr{GeoPolygon}, Cint, UInt32), polygon, res, flags)
+end
+
+function iterStepPolygon(iter)
+    ccall((:iterStepPolygon, libh3), Cvoid, (Ptr{IterCellsPolygon},), iter)
+end
+
+function iterDestroyPolygon(iter)
+    ccall((:iterDestroyPolygon, libh3), Cvoid, (Ptr{IterCellsPolygon},), iter)
+end
+
+function cellToBBox(cell, out, coverChildren)
+    ccall((:cellToBBox, libh3), H3Error, (H3Index, Ptr{BBox}, Bool), cell, out, coverChildren)
+end
+
+function baseCellNumToCell(baseCellNum)
+    ccall((:baseCellNumToCell, libh3), H3Index, (Cint,), baseCellNum)
+end
+
+function validatePolygonFlags(flags)
+    ccall((:validatePolygonFlags, libh3), H3Error, (UInt32,), flags)
 end
 
 function bboxesFromGeoPolygon(polygon, bboxes)
@@ -852,6 +974,22 @@ end
 
 function pointInsidePolygon(geoPolygon, bboxes, coord)
     ccall((:pointInsidePolygon, libh3), Bool, (Ptr{GeoPolygon}, Ptr{BBox}, Ptr{LatLng}), geoPolygon, bboxes, coord)
+end
+
+function cellBoundaryInsidePolygon(geoPolygon, bboxes, boundary, boundaryBBox)
+    ccall((:cellBoundaryInsidePolygon, libh3), Bool, (Ptr{GeoPolygon}, Ptr{BBox}, Ptr{CellBoundary}, Ptr{BBox}), geoPolygon, bboxes, boundary, boundaryBBox)
+end
+
+function cellBoundaryCrossesPolygon(geoPolygon, bboxes, boundary, boundaryBBox)
+    ccall((:cellBoundaryCrossesPolygon, libh3), Bool, (Ptr{GeoPolygon}, Ptr{BBox}, Ptr{CellBoundary}, Ptr{BBox}), geoPolygon, bboxes, boundary, boundaryBBox)
+end
+
+function cellBoundaryCrossesGeoLoop(geoloop, loopBBox, boundary, boundaryBBox)
+    ccall((:cellBoundaryCrossesGeoLoop, libh3), Bool, (Ptr{GeoLoop}, Ptr{BBox}, Ptr{CellBoundary}, Ptr{BBox}), geoloop, loopBBox, boundary, boundaryBBox)
+end
+
+function lineCrossesLine(a1, a2, b1, b2)
+    ccall((:lineCrossesLine, libh3), Bool, (Ptr{LatLng}, Ptr{LatLng}, Ptr{LatLng}, Ptr{LatLng}), a1, a2, b1, b2)
 end
 
 function bboxFromGeoLoop(loop, bbox)
@@ -947,15 +1085,23 @@ const H3_NULL = 0
 
 const H3_VERSION_MAJOR = 4
 
-const H3_VERSION_MINOR = 1
+const H3_VERSION_MINOR = 2
 
-const H3_VERSION_PATCH = 0
+const H3_VERSION_PATCH = 1
 
 const MAX_CELL_BNDRY_VERTS = 10
 
 const M_PI = 3.141592653589793
 
 const M_PI_2 = 1.5707963267948966
+
+const M_RSIN60 = 1.1547005383792515
+
+const M_ONETHIRD = 0.3333333333333333
+
+const M_ONESEVENTH = 0.14285714285714285
+
+const INV_RES0_U_GNOMONIC = 2.618033988749896
 
 const MAX_H3_RES = 15
 
@@ -1032,6 +1178,8 @@ const H3_DIGIT_MASK_NEGATIVE = ~H3_DIGIT_MASK
 const H3_INIT = UINT64_C(35184372088831)
 
 const EPSILON_DEG = 1.0e-9
+
+const FLAG_CONTAINMENT_MODE_MASK = uint32_t(15)
 
 const INVALID_VERTEX_NUM = -1
 
