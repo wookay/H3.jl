@@ -8,6 +8,7 @@
 # Error handling
 ```@docs
 H3ErrorCode
+describeH3Error
 ```
 
 # Indexing functions

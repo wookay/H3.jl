@@ -1,7 +1,7 @@
 module API # module H3
 
 # errors
-export H3ErrorCode
+export H3ErrorCode, describeH3Error
 
 # types
 export H3Index, LatLng, CoordIJ, Vec2d, Vec3d, CoordIJK, FaceIJK
@@ -44,6 +44,10 @@ using .Lib: H3Error
 
 # Error handling
 """
+    struct H3ErrorCode
+        value::H3Error
+    end
+
 The type returned by most H3 functions is `H3Error`,
 a 32 bit integer type with the following properties:
 
@@ -57,6 +61,27 @@ Table of error codes
 """
 struct H3ErrorCode
     value::H3Error
+end
+
+"""
+    describeH3Error(err::H3Error)::String
+    describeH3Error(code::H3ErrorCode)::String
+    describeH3Error(enum::Lib.H3ErrorCodes)::String
+
+converts the provided H3Error value into a description string
+"""
+describeH3Error
+
+function describeH3Error(err::H3Error)::String
+    unsafe_string(Lib.describeH3Error(err))
+end
+
+function describeH3Error(code::H3ErrorCode)::String
+    describeH3Error(code.value)
+end
+
+function describeH3Error(enum::Lib.H3ErrorCodes)::String
+    describeH3Error(H3Error(enum))
 end
 
 function _check_h3error(ret::H3Error, x::T)::Union{H3ErrorCode, T} where T
