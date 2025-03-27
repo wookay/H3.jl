@@ -1,5 +1,8 @@
 module API # module H3
 
+# errors
+export H3ErrorCode
+
 # types
 export H3Index, LatLng, CoordIJ, Vec2d, Vec3d, CoordIJK, FaceIJK
 
@@ -29,54 +32,79 @@ using ..Lib
 using .Lib: H3Index, LatLng, CellBoundary, CoordIJ
 using .Lib: Vec2d, Vec3d, CoordIJK, FaceIJK
 using .Lib: H3_NULL
+using .Lib: H3Error
 
 ###
 #
 # * descriptions are taken from
 #   - https://github.com/uber/h3/tree/master/docs/api
 #   - https://github.com/uber/h3/blob/master/src/h3lib/include/h3api.h.in
-#
+#   - https://h3geo.org/docs/library/errors/
 ###
+
+# errors
+"""
+The type returned by most H3 functions is H3Error, a 32 bit integer type with the following properties:
+
+H3Error will be an integer type of 32 bits, i.e. uint32_t.
+H3Error with value 0 indicates success (no error).
+No H3Error value will set the most significant bit.
+As a result of these properties, no H3Error value will set the bits that correspond with the Mode bit field in an H3Index.
+32 bit return codes with the high bit never set allows for mixing error codes and resulting indexes if desired by the application, after copying the error codes into the result buffer.
+"""
+struct H3ErrorCode
+    value::H3Error
+end
+
+function _check_h3error(ret::H3Error, x::T)::Union{H3ErrorCode, T} where T
+    if Lib.E_SUCCESS == ret
+        x
+    else
+        H3ErrorCode(ret)
+    end
+end
 
 
 # Indexing functions
 
 """
-    latLngToCell(g::LatLng, res::Int)::H3Index
+    latLngToCell(g::LatLng, res::Int)::Union{H3ErrorCode, H3Index}
 
 find the H3 index of the resolution res cell containing the lat/lng
 """
-function latLngToCell(g::LatLng, res::Int)::H3Index
-    refh = Ref{H3Index}()
-    Lib.latLngToCell(Ref(g), res, refh)
-    refh[]
+function latLngToCell(g::LatLng, res::Int)::Union{H3ErrorCode, H3Index}
+    refout = Ref{H3Index}()
+    ret::H3Error = Lib.latLngToCell(Ref(g), res, refout)
+    _check_h3error(ret, refout[])
 end
 
 """
-    cellToLatLng(h::H3Index)::LatLng
+    cellToLatLng(h::H3Index)::Union{H3ErrorCode, LatLng}
 
 find the lat/lng center point g of the cell h3
 """
-function cellToLatLng(h::H3Index)::LatLng
+function cellToLatLng(h::H3Index)::Union{H3ErrorCode, LatLng}
     refcenter = Ref{LatLng}()
-    Lib.cellToLatLng(h, refcenter)
-    refcenter[]
+    ret::H3Error = Lib.cellToLatLng(h, refcenter)
+    _check_h3error(ret, refcenter[])
 end
 
 """
-    cellToBoundary(h::H3Index)::Vector{LatLng}
+    cellToBoundary(h::H3Index)::Union{H3ErrorCode, Vector{LatLng}}
 
 Determines the cell boundary in spherical coordinates for an H3 index.
 
 @param h3 The H3 index.
 @param cb The boundary of the H3 cell in spherical coordinates.
 """
-function cellToBoundary(h::H3Index)::Vector{LatLng}
+function cellToBoundary(h::H3Index)::Union{H3ErrorCode, Vector{LatLng}}
     refboundary = Ref{CellBoundary}()
-    Lib.cellToBoundary(h, refboundary)
-    numVerts = refboundary[].numVerts
-    verts = refboundary[].verts[1:numVerts]
-    collect(verts)
+    ret::H3Error = Lib.cellToBoundary(h, refboundary)
+    _check_h3error(ret, begin
+        numVerts = refboundary[].numVerts
+        verts = refboundary[].verts[1:numVerts]
+        collect(verts)
+    end)
 end
 
 
@@ -89,7 +117,7 @@ returns the resolution of the provided H3 index
 Works on both cells and directed edges.
 """
 function getResolution(h::H3Index)::Cint
-    Lib.getResolution(h)
+    Lib.getResolution(h)::Cint
 end
 
 """
@@ -101,7 +129,7 @@ Note: Technically works on H3 edges, but will return base cell of the
 origin cell.
 """
 function getBaseCellNumber(h::H3Index)::Cint
-    Lib.getBaseCellNumber(h)
+    Lib.getBaseCellNumber(h)::Cint
 end
 
 """
@@ -111,8 +139,8 @@ Converts the string representation to H3Index (UInt64) representation.
 """
 function stringToH3(str::String)::H3Index
     refh = Ref{H3Index}()
-    Lib.stringToH3(str, refh)
-    refh[]
+    ret::H3Error = Lib.stringToH3(str, refh)
+    _check_h3error(ret, refh[])
 end
 
 """
@@ -156,7 +184,7 @@ end
 # Grid traversal functions
 
 """
-    gridDisk(origin::H3Index, k::Int)::Vector{H3Index}
+    gridDisk(origin::H3Index, k::Int)::Union{H3ErrorCode, Vector{H3Index}}
 
 Produce cells within grid distance k of the origin cell.
 
@@ -170,15 +198,17 @@ the output array may be left zero, as can happen when crossing a pentagon.
 @param  k        k >= 0
 @param  out      zero-filled array which must be of size maxGridDiskSize(k)
 """
-function gridDisk(origin::H3Index, k::Int)::Vector{H3Index}
+function gridDisk(origin::H3Index, k::Int)::Union{H3ErrorCode, Vector{H3Index}}
     array_len = maxGridDiskSize(k)
     krings = Vector{H3Index}(undef, array_len)
-    Lib.gridDisk(origin, k, krings)
-    krings
+    ret::H3Error = Lib.gridDisk(origin, k, krings)
+    _check_h3error(ret, krings)
 end
 
+
+
 """
-    maxGridDiskSize(k::Int)::Int64
+    maxGridDiskSize(k::Int)::Union{H3ErrorCode, Int64}
 
 Maximum number of cells that result from the gridDisk algorithm with the
 given k. Formula source and proof: https://oeis.org/A003215
@@ -186,27 +216,27 @@ given k. Formula source and proof: https://oeis.org/A003215
 @param   k   k value, k >= 0.
 @param out   size in indexes
 """
-function maxGridDiskSize(k::Int)::Int64
+function maxGridDiskSize(k::Int)::Union{H3ErrorCode, Int64}
     out = Ref{Int64}() 
-    Lib.maxGridDiskSize(k, out)
-    out[]
+    ret::H3Error = Lib.maxGridDiskSize(k, out)
+    _check_h3error(ret, out[])
 end
 
 """
-    gridDiskDistances(origin::H3Index, k::Int)::NamedTuple{(:out, :distances)}
+    gridDiskDistances(origin::H3Index, k::Int)::Union{H3ErrorCode, NamedTuple{(:out, :distances)}}
 
 k-rings produces indices within `k` distance of the origin index.
 """
-function gridDiskDistances(origin::H3Index, k::Int)::NamedTuple{(:out, :distances)}
+function gridDiskDistances(origin::H3Index, k::Int)::Union{H3ErrorCode, NamedTuple{(:out, :distances)}}
     array_len = maxGridDiskSize(k)
     out = Vector{H3Index}(undef, array_len)
     distances = Vector{Cint}(undef, array_len)
-    Lib.gridDiskDistances(origin, k, out, distances)
-    (out = out, distances = distances)
+    ret::H3Error = Lib.gridDiskDistances(origin, k, out, distances)
+    _check_h3error(ret, (out = out, distances = distances))
 end
 
 """
-    gridDiskUnsafe(origin::H3Index, k::Int)::Vector{H3Index}
+    gridDiskUnsafe(origin::H3Index, k::Int)::Union{H3ErrorCode, Vector{H3Index}}
 
 gridDiskUnsafe produces indexes within k distance of the origin index.
 Output behavior is undefined when one of the indexes returned by this
@@ -223,28 +253,28 @@ the origin.
 @param out Array which must be of size maxGridDiskSize(k).
 @return 0 if no pentagon or pentagonal distortion area was encountered.
 """
-function gridDiskUnsafe(origin::H3Index, k::Int)::Vector{H3Index}
+function gridDiskUnsafe(origin::H3Index, k::Int)::Union{H3ErrorCode, Vector{H3Index}}
     array_len = maxGridDiskSize(k)
     out = Vector{H3Index}(undef, array_len)
-    Lib.gridDiskUnsafe(origin, k, out)
-    out
+    ret::H3Error = Lib.gridDiskUnsafe(origin, k, out)
+    _check_h3error(ret, out)
 end
 
 """
-    gridDiskDistancesUnsafe(origin::H3Index, k::Int)::NamedTuple{(:out, :distances)}
+    gridDiskDistancesUnsafe(origin::H3Index, k::Int)::Union{H3ErrorCode, NamedTuple{(:out, :distances)}}
 
 `hexRange` produces indexes within `k` distance of the origin index.
 """
-function gridDiskDistancesUnsafe(origin::H3Index, k::Int)::NamedTuple{(:out, :distances)}
+function gridDiskDistancesUnsafe(origin::H3Index, k::Int)::Union{H3ErrorCode, NamedTuple{(:out, :distances)}}
     array_len = maxGridDiskSize(k)
     out = Vector{H3Index}(undef, array_len)
     distances = Vector{Cint}(undef, array_len)
-    Lib.gridDiskDistancesUnsafe(origin, k, out, distances)
-    (out = out, distances = distances)
+    ret::H3Error = Lib.gridDiskDistancesUnsafe(origin, k, out, distances)
+    _check_h3error(ret, (out = out, distances = distances))
 end
 
 """
-    gridDisksUnsafe(h3Set::Vector{H3Index}, k::Int)::Vector{H3Index}
+    gridDisksUnsafe(h3Set::Vector{H3Index}, k::Int)::Union{H3ErrorCode, Vector{H3Index}}
 
 gridDisksUnsafe takes an array of input hex IDs and a max k-ring and returns
 an array of hexagon IDs sorted first by the original hex IDs and then by the
@@ -257,15 +287,16 @@ k-ring (0 to max), with no guaranteed sorting within each k-ring group.
            The memory block should be equal to maxGridDiskSize(k) * length
 @return 0 if no pentagon is encountered. Cannot trust output otherwise
 """
-function gridDisksUnsafe(h3Set::Vector{H3Index}, k::Int)::Vector{H3Index}
+function gridDisksUnsafe(h3Set::Vector{H3Index}, k::Int)::Union{H3ErrorCode, Vector{H3Index}}
     array_len = maxGridDiskSize(k)
     out = Vector{H3Index}(undef, array_len)
-    Lib.gridDisksUnsafe(h3Set, length(h3Set), k, out)
-    out
+    ret::H3Error = Lib.gridDisksUnsafe(h3Set, length(h3Set), k, out)
+    _check_h3error(ret, out)
 end
 
 """
     gridRingUnsafe(origin::H3Index, k::Int)::Vector{H3Index}
+
 
 Returns the "hollow" ring of hexagons at exactly grid distance k from
 the origin hexagon. In particular, k=0 returns just the origin hexagon.
@@ -279,14 +310,14 @@ Failure cases may be fixed in future versions.
 @param out Array which must be of size 6 * k (or 1 if k == 0)
 @return 0 if successful; nonzero otherwise.
 """
-function gridRingUnsafe(origin::H3Index, k::Int)::Vector{H3Index}
+function gridRingUnsafe(origin::H3Index, k::Int)::Union{H3ErrorCode, Vector{H3Index}}
     out = Vector{H3Index}(undef, 6k)
-    Lib.gridRingUnsafe(origin, k, out)
-    out
+    ret::H3Error = Lib.gridRingUnsafe(origin, k, out)
+    _check_h3error(ret, out)
 end
 
 """
-    gridPathCells(origin::H3Index, destination::H3Index)::Vector{H3Index}
+    gridPathCells(origin::H3Index, destination::H3Index)::Union{H3ErrorCode, Vector{H3Index}}
 
 Given two H3 indexes, return the line of indexes between them (inclusive).
 
@@ -308,15 +339,15 @@ Notes:
 @param out Output array, which must be of size gridPathCellsSize(start, end)
 @return 0 on success, or another value on failure.
 """
-function gridPathCells(origin::H3Index, destination::H3Index)::Vector{H3Index}
+function gridPathCells(origin::H3Index, destination::H3Index)::Union{H3ErrorCode, Vector{H3Index}}
     line_size = gridPathCellsSize(origin, destination)
     out = Vector{H3Index}(undef, line_size)
-    Lib.gridPathCells(origin, destination, out)
-    out
+    ret::H3Error = Lib.gridPathCells(origin, destination, out)
+    _check_h3error(ret, out)
 end
 
 """
-    gridPathCellsSize(origin::H3Index, destination::H3Index)::Int64
+    gridPathCellsSize(origin::H3Index, destination::H3Index)::Union{H3ErrorCode, Int64}
 
 Number of indexes in a line from the start index to the end index,
 to be used for allocating memory. Returns a negative number if the
@@ -327,14 +358,14 @@ line cannot be computed.
 @param size Size of the line
 @returns 0 on success, or another value on error
 """
-function gridPathCellsSize(origin::H3Index, destination::H3Index)::Int64
-    out = Ref{Int64}()
-    Lib.gridPathCellsSize(origin, destination, out)
-    out[]
+function gridPathCellsSize(origin::H3Index, destination::H3Index)::Union{H3ErrorCode, Int64}
+    refout = Ref{Int64}()
+    ret::H3Error = Lib.gridPathCellsSize(origin, destination, refout)
+    _check_h3error(ret, refout[])
 end
 
 """
-    gridDistance(origin::H3Index, h::H3Index)::Int64
+    gridDistance(origin::H3Index, h::H3Index)::Union{H3ErrorCode, Int64}
 
 Produces the grid distance between the two indexes.
 
@@ -344,17 +375,16 @@ distances for indexes on opposite sides of a pentagon.
 
 @param origin Index to find the distance from.
 @param index Index to find the distance to.
-@return The distance, or a negative number if the library could not
-compute the distance.
+@return The distance, or a H3ErrorCode if the library could not compute the distance.
 """
-function gridDistance(origin::H3Index, h::H3Index)::Int64
-    out = Ref{Int64}()
-    Lib.gridDistance(origin, h, out)
-    out[] 
+function gridDistance(origin::H3Index, h::H3Index)::Union{H3ErrorCode, Int64}
+    refout = Ref{Int64}()
+    ret::H3Error = Lib.gridDistance(origin, h, refout)
+    _check_h3error(ret, refout[])
 end
 
 """
-    cellToLocalIj(origin::H3Index, h::H3Index)::CoordIJ
+    cellToLocalIj(origin::H3Index, h::H3Index)::Union{H3ErrorCode, CoordIJ}
 
 Produces ij coordinates for an index anchored by an origin.
 
@@ -376,15 +406,15 @@ to be compatible across different versions of H3.
 @param out ij coordinates of the index will be placed here on success
 @return 0 on success, or another value on failure.
 """
-function cellToLocalIj(origin::H3Index, h::H3Index)::CoordIJ
+function cellToLocalIj(origin::H3Index, h::H3Index)::Union{H3ErrorCode, CoordIJ}
     mode = UInt32(0)
     refij = Ref{CoordIJ}()
-    Lib.cellToLocalIj(origin, h, mode, refij)
-    refij[]
+    ret::H3Error = Lib.cellToLocalIj(origin, h, mode, refij)
+    _check_h3error(ret, refij[])
 end
 
 """
-    localIjToCell(origin::H3Index, ij::CoordIJ)::H3Index
+    localIjToCell(origin::H3Index, ij::CoordIJ)::Union{H3ErrorCode, H3Index}
 
 Produces an index for ij coordinates anchored by an origin.
 
@@ -403,18 +433,18 @@ to be compatible across different versions of H3.
 @param index Index will be placed here on success.
 @return 0 on success, or another value on failure.
 """
-function localIjToCell(origin::H3Index, ij::CoordIJ)::H3Index
+function localIjToCell(origin::H3Index, ij::CoordIJ)::Union{H3ErrorCode, H3Index}
     mode = UInt32(0)
     refh = Ref{H3Index}()
-    Lib.localIjToCell(origin, Ref(ij), mode, refh)
-    refh[]
+    ret::H3Error = Lib.localIjToCell(origin, Ref(ij), mode, refh)
+    _check_h3error(ret, refh[])
 end
 
 
 # Hierarchical grid functions
 
 """
-    cellToParent(h::H3Index, parentRes::Int)::H3Index
+    cellToParent(h::H3Index, parentRes::Int)::Union{H3ErrorCode, H3Index}
 
 cellToParent produces the parent index for a given H3 index
 
@@ -423,79 +453,79 @@ cellToParent produces the parent index for a given H3 index
 
 @return H3Index of the parent, or H3_NULL if you actually asked for a child
 """
-function cellToParent(h::H3Index, parentRes::Int)::H3Index
+function cellToParent(h::H3Index, parentRes::Int)::Union{H3ErrorCode, H3Index}
     refh = Ref{H3Index}()
-    Lib.cellToParent(h, parentRes, refh)
-    refh[]
+    ret::H3Error = Lib.cellToParent(h, parentRes, refh)
+    _check_h3error(ret, refh[])
 end
 
 """
-    cellToChildren(h::H3Index, childRes::Int)::Vector{H3Index}
+    cellToChildren(h::H3Index, childRes::Int)::Union{H3ErrorCode, Vector{H3Index}}
 
 provides the children (or grandchildren, etc) of the given cell
 """
-function cellToChildren(h::H3Index, childRes::Int)::Vector{H3Index}
+function cellToChildren(h::H3Index, childRes::Int)::Union{H3ErrorCode, Vector{H3Index}}
     children_size = cellToChildrenSize(h, childRes)
     children = Vector{H3Index}(undef, children_size)
-    Lib.cellToChildren(h, childRes, children)
-    children
+    ret::H3Error = Lib.cellToChildren(h, childRes, children)
+    _check_h3error(ret, children)
 end
 
 """
-    cellToChildrenSize(h::H3Index, childRes::Int)::Int
+    cellToChildrenSize(h::H3Index, childRes::Int)::Union{H3ErrorCode, Int64}
 
 determines the exact number of children (or grandchildren, etc)
 that would be returned for the given cell
 """
-function cellToChildrenSize(h::H3Index, childRes::Int)::Int64
-    ref = Ref{Int64}()
-    Lib.cellToChildrenSize(h, childRes, ref)
-    ref[]
+function cellToChildrenSize(h::H3Index, childRes::Int)::Union{H3ErrorCode, Int64}
+    refout = Ref{Int64}()
+    ret::H3Error = Lib.cellToChildrenSize(h, childRes, refout)
+    _check_h3error(ret, refout[])
 end
 
 """
-    compactCells(h3Set::Vector{H3Index})::Vector{H3Index}
+    compactCells(h3Set::Vector{H3Index})::Union{H3ErrorCode, Vector{H3Index}}
 
 compacts the given set of hexagons as best as possible
 """
-function compactCells(h3Set::Vector{H3Index})::Vector{H3Index}
+function compactCells(h3Set::Vector{H3Index})::Union{H3ErrorCode, Vector{H3Index}}
     numHexes = length(h3Set)
-    compactedSet = fill(H3_NULL, numHexes)
-    Lib.compactCells(h3Set, compactedSet, numHexes)
-    compactedSet
+    compactedSet = fill(H3Index(H3_NULL), numHexes)
+    ret::H3Error = Lib.compactCells(h3Set, compactedSet, numHexes)
+    _check_h3error(ret, compactedSet)
 end
 
 """
-    uncompactCells(compactedSet::Vector{H3Index}, res::Int)::Vector{H3Index}
+    uncompactCells(compactedSet::Vector{H3Index}, res::Int)::Union{H3ErrorCode, Vector{H3Index}}
 
 uncompacts the compacted hexagon set
 """
-function uncompactCells(compactedSet::Vector{H3Index}, res::Int)::Vector{H3Index}
+function uncompactCells(compactedSet::Vector{H3Index}, res::Int)::Union{H3ErrorCode, Vector{H3Index}}
     numCompacted = length(compactedSet)
     numOut = uncompactCellsSize(compactedSet, res)
     outSet = Vector{H3Index}(undef, numOut)
-    Lib.uncompactCells(compactedSet, numCompacted, outSet, numOut, res)
-    outSet
+    ret::H3Error = Lib.uncompactCells(compactedSet, numCompacted, outSet, numOut, res)
+    _check_h3error(ret, outSet)
 end
 
 """
-    uncompactCellsSize(compactedSet::Vector{H3Index}, res::Int)::Int64
+    uncompactCellsSize(compactedSet::Vector{H3Index}, res::Int)::Union{H3ErrorCode, Int64}
 
 determines the exact number of hexagons that will be uncompacted
 from the compacted set
 """
-function uncompactCellsSize(compactedSet::Vector{H3Index}, res::Int)::Int64
+function uncompactCellsSize(compactedSet::Vector{H3Index}, res::Int)::Union{H3ErrorCode, Int64}
     numCompacted = length(compactedSet)
-    out = Ref{Int64}()
-    Lib.uncompactCellsSize(compactedSet, numCompacted, Cint(res), out)
-    out[]
+    refout = Ref{Int64}()
+    ret::H3Error = Lib.uncompactCellsSize(compactedSet, numCompacted, Cint(res), refout)
+    _check_h3error(ret, refout[])
 end
 
 
 # Unidirectional edge functions
 
 """
-    areNeighborCells(origin::H3Index, destination::H3Index)::Bool
+    areNeighborCells(origin::H3Index, destination::H3Index)::Union{H3ErrorCode, Bool}
 
 Returns whether or not the provided H3Indexes are neighbors.
 @param origin The origin H3 index.
@@ -503,14 +533,14 @@ Returns whether or not the provided H3Indexes are neighbors.
 @param out Set to 1 if the indexes are neighbors, 0 otherwise
 @return Error code if the origin or destination are invalid or incomparable.
 """
-function areNeighborCells(origin::H3Index, destination::H3Index)::Bool
-    out = Ref{Cint}()
-    Lib.areNeighborCells(origin, destination, out)
-    Bool(out[])
+function areNeighborCells(origin::H3Index, destination::H3Index)::Union{H3ErrorCode, Bool}
+    refout = Ref{Cint}()
+    ret::H3Error = Lib.areNeighborCells(origin, destination, refout)
+    _check_h3error(ret, Bool(refout[]))
 end
 
 """
-    cellsToDirectedEdge(origin::H3Index, destination::H3Index)::H3Index
+    cellsToDirectedEdge(origin::H3Index, destination::H3Index)::Union{H3ErrorCode, H3Index}
 
 Returns a directed edge H3 index based on the provided origin and
 destination
@@ -518,10 +548,10 @@ destination
 @param destination The destination H3 hexagon index
 @return The directed edge H3Index, or H3_NULL on failure.
 """
-function cellsToDirectedEdge(origin::H3Index, destination::H3Index)::H3Index
+function cellsToDirectedEdge(origin::H3Index, destination::H3Index)::Union{H3ErrorCode, H3Index}
     refh = Ref{H3Index}()
-    Lib.cellsToDirectedEdge(origin, destination, refh)
-    refh[]
+    ret::H3Error = Lib.cellsToDirectedEdge(origin, destination, refh)
+    _check_h3error(ret, refh[])
 end
 
 """
@@ -534,43 +564,43 @@ function isValidDirectedEdge(edge::H3Index)::Bool
 end
 
 """
-    getDirectedEdgeOrigin(edge::H3Index)::H3Index
+    getDirectedEdgeOrigin(edge::H3Index)::Union{H3ErrorCode, H3Index}
 
 Returns the origin hexagon from the directed edge H3Index
 @param edge The edge H3 index
 @return The origin H3 hexagon index, or H3_NULL on failure
 """
-function getDirectedEdgeOrigin(edge::H3Index)::H3Index
+function getDirectedEdgeOrigin(edge::H3Index)::Union{H3ErrorCode, H3Index}
     refh = Ref{H3Index}()
-    Lib.getDirectedEdgeOrigin(edge, refh)
-    refh[]
+    ret::H3Error = Lib.getDirectedEdgeOrigin(edge, refh)
+    _check_h3error(ret, refh[])
 end
 
 """
-    getDirectedEdgeDestination(edge::H3Index)::H3Index
+    getDirectedEdgeDestination(edge::H3Index)::Union{H3ErrorCode, H3Index}
 
 Returns the destination hexagon from the directed edge H3Index
 @param edge The edge H3 index
 @return The destination H3 hexagon index, or H3_NULL on failure
 """
-function getDirectedEdgeDestination(edge::H3Index)::H3Index
+function getDirectedEdgeDestination(edge::H3Index)::Union{H3ErrorCode, H3Index}
     refh = Ref{H3Index}()
-    Lib.getDirectedEdgeDestination(edge, refh)
-    refh[]
+    ret::H3Error = Lib.getDirectedEdgeDestination(edge, refh)
+    _check_h3error(ret, refh[])
 end
 
 """
-    directedEdgeToCells(edge::H3Index)::Tuple{H3Index, H3Index}
+    directedEdgeToCells(edge::H3Index)::Union{H3ErrorCode, Tuple{H3Index, H3Index}}
 
 Returns the origin, destination pair of hexagon IDs for the given edge ID
 @param edge The directed edge H3Index
 @param originDestination Pointer to memory to store origin and destination
 IDs
 """
-function directedEdgeToCells(edge::H3Index)::Tuple{H3Index, H3Index}
+function directedEdgeToCells(edge::H3Index)::Union{H3ErrorCode, Tuple{H3Index, H3Index}}
     originDestination = Vector{H3Index}(undef, 2)
-    Lib.directedEdgeToCells(edge, originDestination)
-    tuple(originDestination...)
+    ret::H3Error = Lib.directedEdgeToCells(edge, originDestination)
+    _check_h3error(ret, tuple(originDestination...))
 end
 
 """
@@ -582,99 +612,86 @@ Provides all of the directed edges from the current H3Index.
 """
 function originToDirectedEdges(origin::H3Index)::Vector{H3Index}
     edges = Vector{H3Index}(undef, 6)
-    Lib.originToDirectedEdges(origin, edges)
-    edges
+    ret::H3Error = Lib.originToDirectedEdges(origin, edges)
+    _check_h3error(ret, edges)
 end
 
 """
-    directedEdgeToBoundary(edge::H3Index)::Vector{LatLng}
+    directedEdgeToBoundary(edge::H3Index)::Union{H3ErrorCode, Vector{LatLng}}
 
 Provides the coordinates defining the directed edge.
 @param edge The directed edge H3Index
 @param cb The cellboundary object to store the edge coordinates.
 """
-function directedEdgeToBoundary(edge::H3Index)::Vector{LatLng}
+function directedEdgeToBoundary(edge::H3Index)::Union{H3ErrorCode, Vector{LatLng}}
     refboundary = Ref{CellBoundary}()
-    Lib.directedEdgeToBoundary(edge, refboundary)
-    numVerts = refboundary[].numVerts
-    verts = refboundary[].verts[1:numVerts]
-    collect(verts)
+    ret::H3Error = Lib.directedEdgeToBoundary(edge, refboundary)
+    _check_h3error(ret, begin
+        numVerts = refboundary[].numVerts
+        verts = refboundary[].verts[1:numVerts]
+        collect(verts)
+    end)
 end
 
 
 # Miscellaneous H3 functions
-
 """
-    hexAreaKm2(res::Int)::Cdouble
-
-Average hexagon area in square kilometers at the given resolution.
-"""
-function hexAreaKm2(res::Int)::Cdouble
-    Lib.hexAreaKm2(res)
-end
-
-"""
-    hexAreaM2(res::Int)::Cdouble
-
-Average hexagon area in square meters at the given resolution.
-"""
-function hexAreaM2(res::Int)::Cdouble
-    Lib.hexAreaM2(res)
-end
-
-"""
-    cellAreaRads2(cell::H3Index)::Cdouble
+    cellAreaRads2(cell::H3Index)::Union{H3ErrorCode, Cdouble}
 
 Exact area of specific cell in square radiants.
 """
-function cellAreaRads2(cell::H3Index)::Cdouble
+function cellAreaRads2(cell::H3Index)::Union{H3ErrorCode, Cdouble}
     out = Ref{Cdouble}()
-    Lib.cellAreaRads2(cell, out)
-    out[]
+    ret::H3Error = Lib.cellAreaRads2(cell, out)
+    _check_h3error(ret, out[])
 end
 
 """
-    cellAreaKm2(cell::H3Index)::Cdouble
+    cellAreaKm2(cell::H3Index)::Union{H3ErrorCode, Cdouble}
 
 Exact area of specific cell in square kilometers.
 """
-function cellAreaKm2(cell::H3Index)::Cdouble
-    out = Ref{Cdouble}()
-    Lib.cellAreaKm2(cell, out)
-    out[]
+function cellAreaKm2(cell::H3Index)::Union{H3ErrorCode, Cdouble}
+    refout = Ref{Cdouble}()
+    ret::H3Error = Lib.cellAreaKm2(cell, refout)
+    _check_h3error(ret, refout[])
 end
 
 """
-    cellAreaM2(res::Int)::Cdouble
+    cellAreaM2(res::Int)::Union{H3ErrorCode, Cdouble}
 
 Exact area of specific cell in square meters.
 """
-function cellAreaM2(cell::H3Index)::Cdouble
-    out = Ref{Cdouble}()
-    Lib.cellAreaM2(cell, out)
-    out[]
+function cellAreaM2(cell::H3Index)::Union{H3ErrorCode, Cdouble}
+    refout = Ref{Cdouble}()
+    ret::H3Error = Lib.cellAreaM2(cell, refout)
+    _check_h3error(ret, refout[])
 end
 
 """
-    edgeLengthKm(res::Int)::Cdouble
+    edgeLengthKm(res::Int)::Union{H3ErrorCode, Cdouble}
 
 Average hexagon edge length in kilometers at the given resolution.
 """
-function edgeLengthKm(res::Int)::Cdouble
-    Lib.edgeLengthKm(res)
+function edgeLengthKm(res::Int)::Union{H3ErrorCode, Cdouble}
+    refout = Ref{Cdouble}()
+    ret::H3Error = Lib.edgeLengthKm(res, refout)
+    _check_h3error(ret, refout[])
 end
 
 """
-    edgeLengthM(res::Int)::Cdouble
+    edgeLengthM(res::Int)::Union{H3ErrorCode, Cdouble}
 
 Average hexagon edge length in meters at the given resolution.
 """
-function edgeLengthM(res::Int)::Cdouble
-    Lib.edgeLengthM(res)
+function edgeLengthM(res::Int)::Union{H3ErrorCode, Cdouble}
+    refout = Ref{Cdouble}()
+    ret::H3Error = Lib.edgeLengthM(res, refout)
+    _check_h3error(ret, refout[])
 end
 
 """
-    getNumCells(res::Int)::Int64
+    getNumCells(res::Int)::Union{H3ErrorCode, Int64}
 
 number of cells (hexagons and pentagons) for a given resolution
 
@@ -718,21 +735,21 @@ c(r) = 12*p(r) + 110*h(r)
 
 @return       number of cells at resolution `res`
 """
-function getNumCells(res::Int)::Int64
-    ref = Ref{Int64}()
-    Lib.getNumCells(res, ref)
-    ref[]
+function getNumCells(res::Int)::Union{H3ErrorCode, Int64}
+    refout = Ref{Int64}()
+    ret::H3Error = Lib.getNumCells(res, refout)
+    _check_h3error(ret, refout[])
 end
 
 """
-    getRes0Cells()::Vector{H3Index}
+    getRes0Cells()::Union{H3ErrorCode, Vector{H3Index}}
 
 All the resolution 0 H3 indexes.
 """
-function getRes0Cells()::Vector{H3Index}
+function getRes0Cells()::Union{H3ErrorCode, Vector{H3Index}}
     out = Vector{H3Index}(undef, res0CellCount())
-    Lib.getRes0Cells(out)
-    out
+    ret::H3Error = Lib.getRes0Cells(out)
+    _check_h3error(ret, out)
 end
 
 """
@@ -741,21 +758,21 @@ end
 returns the number of resolution 0 cells (hexagons and pentagons)
 """
 function res0CellCount()::Cint
-    Lib.res0CellCount()
+    Lib.res0CellCount()::Cint
 end
 
 
 ### Coordinate Systems
 
 """
-    ijToIjk(c::CoordIJ)::CoordIJK
+    ijToIjk(c::CoordIJ)::Union{H3ErrorCode, CoordIJK}
 
 Transforms coordinates from the IJ coordinate system to the IJK+ coordinate system.
 """
-function ijToIjk(c::CoordIJ)::CoordIJK
-    ref = Ref{CoordIJK}()
-    ccall((:ijToIjk, Lib.libh3), Cvoid, (Ptr{CoordIJ}, Ptr{CoordIJK}), Ref(c), ref)
-    ref[]
+function ijToIjk(c::CoordIJ)::Union{H3ErrorCode, CoordIJK}
+    refijk = Ref{CoordIJK}()
+    ret::H3Error = Lib.ijToIjk(Ref(c), refijk)
+    _check_h3error(ret, refijk[])
 end
 
 """
@@ -764,9 +781,9 @@ end
 Find the center point in 2D cartesian coordinates of a hex.
 """
 function ijkToHex2d(c::CoordIJK)::Vec2d
-    ref = Ref{Vec2d}()
-    ccall((:_ijkToHex2d, Lib.libh3), Cvoid, (Ptr{CoordIJK}, Ptr{Vec2d}), Ref(c), ref)
-    ref[]
+    refv = Ref{Vec2d}()
+    Lib._ijkToHex2d(Ref(c), refv)::Cvoid
+    refv[]
 end
 
 """
@@ -775,9 +792,9 @@ end
 Transforms coordinates from the IJK+ coordinate system to the IJ coordinate system.
 """
 function ijkToIj(c::CoordIJK)::CoordIJ
-    ref = Ref{CoordIJ}()
-    ccall((:ijkToIj, Lib.libh3), Cvoid, (Ptr{CoordIJK}, Ptr{CoordIJ}), Ref(c), ref)
-    ref[]
+    refij = Ref{CoordIJ}()
+    Lib.ijkToIj(Ref(c), refij)::Cvoid
+    refij[]
 end
 
 """
@@ -786,7 +803,7 @@ end
 Finds the distance between the two coordinates. Returns result.
 """
 function ijkDistance(c1::CoordIJK, c2::CoordIJK)::Int
-    ccall((:ijkDistance, Lib.libh3), Cint, (Ptr{CoordIJK}, Ptr{CoordIJK}), Ref(c1), Ref(c2))
+    Lib.ijkDistance(Ref(c1), Ref(c2))::Cint
 end
 
 """
@@ -796,12 +813,12 @@ Normalizes ijk coordinates by setting the components to the smallest possible va
 """
 function ijkNormalize(c::CoordIJK)::CoordIJK
     ref = Ref(c)
-    ccall((:_ijkNormalize, Lib.libh3), Cvoid, (Ptr{CoordIJK},), ref)
+    Lib._ijkNormalize(ref)::Cvoid
     ref[]
 end
 
 """
-    cellToLocalIjk(origin::H3Index, h3::H3Index)::CoordIJK
+    cellToLocalIjk(origin::H3Index, h3::H3Index)::Union{H3ErrorCode, CoordIJK}
 
 Produces ijk+ coordinates for an index anchored by an origin.
 
@@ -819,25 +836,25 @@ or if the index is on the other side of a pentagon.
 @param out ijk+ coordinates of the index will be placed here on success
 @return 0 on success, or another value on failure.
 """
-function cellToLocalIjk(origin::H3Index, h3::H3Index)::CoordIJK
-    ref = Ref{CoordIJK}()
-    Lib.cellToLocalIjk(origin, h3, ref)
-    ref[]
+function cellToLocalIjk(origin::H3Index, h3::H3Index)::Union{H3ErrorCode, CoordIJK}
+    refout = Ref{CoordIJK}()
+    ret::H3Error = Lib.cellToLocalIjk(origin, h3, refout)
+    _check_h3error(ret, refout[])
 end
 
 """
-    h3ToFaceIjk(h::H3Index)::FaceIJK
+    h3ToFaceIjk(h::H3Index)::Union{H3ErrorCode, FaceIJK}
 
 Convert an H3Index to a FaceIJK address.
 """
-function h3ToFaceIjk(h::H3Index)::FaceIJK
-    ref = Ref{FaceIJK}()
-    ccall((:_h3ToFaceIjk, Lib.libh3), Cvoid, (H3Index, Ptr{FaceIJK}), h, ref)
-    ref[]
+function h3ToFaceIjk(h::H3Index)::Union{H3ErrorCode, FaceIJK}
+    ref_fijk = Ref{FaceIJK}()
+    ret::H3Error = Lib._h3ToFaceIjk(h, ref_fijk)
+    _check_h3error(ret, ref_fijk[])
 end
 
 """
-    localIjkToCell(origin::H3Index, ijk::CoordIJK)::H3Index
+    localIjkToCell(origin::H3Index, ijk::CoordIJK)::Union{H3ErrorCode, H3Index}
 
 Produces an index for ijk+ coordinates anchored by an origin.
 
@@ -852,10 +869,10 @@ or if the index is on the other side of a pentagon.
 @param out The index will be placed here on success
 @return 0 on success, or another value on failure.
 """
-function localIjkToCell(origin::H3Index, ijk::CoordIJK)::H3Index
-    ref = Ref{H3Index}()
-    Lib.localIjkToCell(origin, Ref(ijk), ref)
-    ref[]
+function localIjkToCell(origin::H3Index, ijk::CoordIJK)::Union{H3ErrorCode, H3Index}
+    refh = Ref{H3Index}()
+    ret::H3Error = Lib.localIjkToCell(origin, Ref(ijk), refh)
+    _check_h3error(ret, refh[])
 end
 
 """
@@ -864,7 +881,7 @@ end
 Convert an FaceIJK address to the corresponding H3Index.
 """
 function faceIjkToH3(faceijk::FaceIJK, res::Int)::H3Index
-    ccall((:_faceIjkToH3, Lib.libh3), H3Index, (Ptr{FaceIJK}, Cint), Ref(faceijk), res)
+    Lib._faceIjkToH3(Ref(faceijk), res)::H3Index
 end
 
 """
@@ -874,7 +891,7 @@ Determine the containing hex in ijk+ coordinates for a 2D cartesian coordinate v
 """
 function hex2dToCoordIJK(v::Vec2d)::CoordIJK
     ref = Ref{CoordIJK}()
-    ccall((:_hex2dToCoordIJK, Lib.libh3), Cvoid, (Ptr{Vec2d}, Ptr{CoordIJK}), Ref(v), ref)
+    Lib._hex2dToCoordIJK(Ref(v), ref)::Cvoid
     ref[]
 end
 
@@ -885,7 +902,7 @@ Calculate the 3D coordinate on unit sphere from the latitude and longitude.
 """
 function geoToVec3d(geo::LatLng)::Vec3d
     ref = Ref{Vec3d}()
-    ccall((:_geoToVec3d, Lib.libh3), Cvoid, (Ptr{LatLng}, Ptr{Vec3d}), Ref(geo), ref)
+    Lib._geoToVec3d(Ref(geo), ref)::Cvoid
     ref[]
 end
 
@@ -896,7 +913,7 @@ Encodes a coordinate on the sphere to the FaceIJK address of the containing cell
 """
 function geoToFaceIjk(geo::LatLng, res::Int)::FaceIJK
     ref = Ref{FaceIJK}()
-    ccall((:_geoToFaceIjk, Lib.libh3), Cvoid, (Ptr{LatLng}, Cint, Ptr{FaceIJK}), Ref(geo), res, ref)
+    Lib._geoToFaceIjk(Ref(geo), res, ref)::Cvoid
     ref[]
 end
 
@@ -914,7 +931,7 @@ function Base.isapprox(A::Vector{LatLng}, B::Vector{LatLng})
     return true
 end
 
-function Base.isapprox(A::Vector{Tuple{Float64,Float64}}, B::Vector{Tuple{Float64,Float64}})
+function Base.isapprox(A::Vector{Tuple{Float64, Float64}}, B::Vector{Tuple{Float64, Float64}})
     A === B && return true
     axes(A) != axes(B) && return false
     for (a, b) in zip(A, B)
