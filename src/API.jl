@@ -133,11 +133,11 @@ function getBaseCellNumber(h::H3Index)::Cint
 end
 
 """
-    stringToH3(str::String)::H3Index
+    stringToH3(str::String)::Union{H3ErrorCode, H3Index}
 
 Converts the string representation to H3Index (UInt64) representation.
 """
-function stringToH3(str::String)::H3Index
+function stringToH3(str::String)::Union{H3ErrorCode, H3Index}
     refh = Ref{H3Index}()
     ret::H3Error = Lib.stringToH3(str, refh)
     _check_h3error(ret, refh[])
@@ -604,13 +604,13 @@ function directedEdgeToCells(edge::H3Index)::Union{H3ErrorCode, Tuple{H3Index, H
 end
 
 """
-    originToDirectedEdges(origin::H3Index)::Vector{H3Index}
+    originToDirectedEdges(origin::H3Index)::Union{H3ErrorCode, Vector{H3Index}}
 
 Provides all of the directed edges from the current H3Index.
 @param origin The origin hexagon H3Index to find edges for.
 @param edges The memory to store all of the edges inside.
 """
-function originToDirectedEdges(origin::H3Index)::Vector{H3Index}
+function originToDirectedEdges(origin::H3Index)::Union{H3ErrorCode, Vector{H3Index}}
     edges = Vector{H3Index}(undef, 6)
     ret::H3Error = Lib.originToDirectedEdges(origin, edges)
     _check_h3error(ret, edges)
