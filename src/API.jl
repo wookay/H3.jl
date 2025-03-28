@@ -63,6 +63,15 @@ struct H3ErrorCode
     value::H3Error
 end
 
+function Base.show(io::IO, mime::MIME"text/plain", code::H3ErrorCode)
+    printstyled(io, nameof(H3ErrorCode), color = code.value == Lib.E_SUCCESS ? :green : :red)
+    print(io, "(")
+    printstyled(io, Lib.H3ErrorCodes(code.value), color = :cyan)
+    print(io, ")")
+    print(io, ": ")
+    printstyled(io, describeH3Error(code), color = :cyan)
+end
+
 """
     describeH3Error(err::H3Error)::String
     describeH3Error(code::H3ErrorCode)::String
