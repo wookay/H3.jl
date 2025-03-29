@@ -72,6 +72,7 @@ directedEdgeToBoundary
 cellAreaRads2
 cellAreaKm2
 cellAreaM2
+edgeLengthRads
 edgeLengthKm
 edgeLengthM
 getNumCells

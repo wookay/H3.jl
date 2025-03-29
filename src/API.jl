@@ -22,7 +22,7 @@ export cellToParent, cellToChildren, cellToChildrenSize, compactCells, uncompact
 export areNeighborCells, cellsToDirectedEdge, isValidDirectedEdge, getDirectedEdgeOrigin, getDirectedEdgeDestination, directedEdgeToCells, originToDirectedEdges, directedEdgeToBoundary
 
 # Miscellaneous H3 functions
-export hexAreaKm2, hexAreaM2, cellAreaRads2, cellAreaKm2, cellAreaM2, edgeLengthKm, edgeLengthM, getNumCells, getRes0Cells, res0CellCount
+export hexAreaKm2, hexAreaM2, cellAreaRads2, cellAreaKm2, cellAreaM2, edgeLengthRads, edgeLengthKm, edgeLengthM, getNumCells, getRes0Cells, res0CellCount
 
 # Coordinate Systems
 export ijToIjk, ijkToHex2d, ijkToIj, ijkDistance, ijkNormalize, cellToLocalIjk, h3ToFaceIjk, localIjkToCell, faceIjkToH3, hex2dToCoordIJK, geoToVec3d, geoToFaceIjk
@@ -706,24 +706,35 @@ function cellAreaM2(cell::H3Index)::Union{H3ErrorCode, Cdouble}
 end
 
 """
-    edgeLengthKm(res::Int)::Union{H3ErrorCode, Cdouble}
+    edgeLengthRads(edge::H3Index)::Union{H3ErrorCode, Float64}
 
-Average hexagon edge length in kilometers at the given resolution.
+Length of a directed edge in radians.
 """
-function edgeLengthKm(res::Int)::Union{H3ErrorCode, Cdouble}
+function edgeLengthRads(edge::H3Index)::Union{H3ErrorCode, Float64}
     refout = Ref{Cdouble}()
-    ret::H3Error = Lib.edgeLengthKm(res, refout)
+    ret::H3Error = Lib.edgeLengthRads(edge, refout)
     _check_h3error(ret, refout[])
 end
 
 """
-    edgeLengthM(res::Int)::Union{H3ErrorCode, Cdouble}
+    edgeLengthKm(edge::H3Index)::Union{H3ErrorCode, Float64}
 
-Average hexagon edge length in meters at the given resolution.
+Length of a directed edge in kilometers.
 """
-function edgeLengthM(res::Int)::Union{H3ErrorCode, Cdouble}
+function edgeLengthKm(edge::H3Index)::Union{H3ErrorCode, Float64}
     refout = Ref{Cdouble}()
-    ret::H3Error = Lib.edgeLengthM(res, refout)
+    ret::H3Error = Lib.edgeLengthKm(edge, refout)
+    _check_h3error(ret, refout[])
+end
+
+"""
+    edgeLengthM(edge::H3Index)::Union{H3ErrorCode, Float64}
+
+Length of a directed edge in meters.
+"""
+function edgeLengthM(edge::H3Index)::Union{H3ErrorCode, Float64}
+    refout = Ref{Cdouble}()
+    ret::H3Error = Lib.edgeLengthM(edge, refout)
     _check_h3error(ret, refout[])
 end
 
