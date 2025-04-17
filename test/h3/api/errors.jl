@@ -25,11 +25,9 @@ using H3.Lib: Lib, H3Error, E_SUCCESS, E_FAILED
 @test E_SUCCESS isa Lib.H3ErrorCodes
 @test E_FAILED isa Lib.H3ErrorCodes
 
-function sprint_error_code(code::H3ErrorCode)::String
-    sprint(io -> show(io, MIME"text/plain"(), code))
-end
+using Jive # sprint_plain
 
-@test sprint_error_code(H3ErrorCode(E_SUCCESS)) == "H3ErrorCode(E_SUCCESS): Success"
-@test sprint_error_code(H3ErrorCode(E_FAILED))  == "H3ErrorCode(E_FAILED): The operation failed but a more specific error is not available"
+@test sprint_plain(H3ErrorCode(E_SUCCESS)) == "H3ErrorCode(E_SUCCESS): Success"
+@test sprint_plain(H3ErrorCode(E_FAILED))  == "H3ErrorCode(E_FAILED): The operation failed but a more specific error is not available"
 
 end # module test_h3_api_errors
