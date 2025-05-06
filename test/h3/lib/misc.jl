@@ -16,8 +16,8 @@ Lib.res0CellCount
 res = 0
 out = Ref{Cdouble}()
 Lib.getHexagonEdgeLengthAvgKm(res, out)
-@test out[] == 1107.712591 # h3 4.1.0 (Jan 19, 2023)
-# it's been changed to 1281.256011
+#           == 1107.712591   # h3 4.1.0 (Jan 19, 2023)
+@test out[] == 1281.256011   # h3 4.2.0
 # Update average edge lengths (Mar 24, 2023)
 # https://github.com/uber/h3/commit/71e09dc002b211887c6db525609a449058233a71
 
