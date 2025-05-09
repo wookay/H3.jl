@@ -5,6 +5,6 @@ include("API.jl")
 
 # Julia-native add-on functionality,
 # beyond what's defined in H3.
-include("AddOns/AddOns.jl")
+include("GeoGraphs/GeoGraphs.jl")
 
 end # module H3

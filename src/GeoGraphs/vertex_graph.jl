@@ -1,5 +1,5 @@
 export check_for_common_resolution
-export generate_vertex_graph
+export get_cell_to_vertex_graph
 
 using ..H3.API
 
@@ -31,7 +31,7 @@ Edges.
 2. M-to-N mapping from cell indexes to vertex indexes.
 
 """
-function generate_vertex_graph(cell_indexes::Vector{H3Index};
+function get_cell_to_vertex_graph(cell_indexes::Vector{H3Index};
                                generate_centroid_latlng::Bool=true,
                                generate_vertex_latlng::Bool=true)::MetaDiGraph
 
