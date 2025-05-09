@@ -1,27 +1,8 @@
-export check_for_common_resolution
 export get_cell_to_vertex_graph
 
 using ..H3.API
 
 using Graphs, MetaGraphs
-
-"""
-Trivial function to check that all indexes have a common resolution.
-
-Returns `true` or `false`.
-
-"""
-function check_for_common_resolution(h3_indexes::Vector{H3Index})::Bool
-    resolutions = getResolution.(h3_indexes)
-    unique_resolutions = unique(resolutions)
-    num_unique_resolutions = length(unique_resolutions)
-    if num_unique_resolutions == 1
-        result = true
-    else
-        result = false
-    end
-    return result
-end
 
 """
 Generates and returns a graph with two level hierarchy of
@@ -49,7 +30,7 @@ function get_cell_to_vertex_graph(cell_indexes::Vector{H3Index};
     unique_vertexes = unique(all_vertexes)
 
     # Start graph.
-    vertex_graph = SimpleDiGraph()
+    vertex_graph = SimpleDiGraph(UInt64)
     mvg = MetaDiGraph(vertex_graph)
     set_prop!(mvg,:graph_function,"cell-to-vertex tree")
     set_prop!(mvg,:resolution,resolution)
