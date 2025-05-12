@@ -15,8 +15,8 @@ Jive = "0.3"
 julia = "1.6"
 
 [extras]
-Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 Jive = "ba5e3d4b-8524-549f-bc71-e76ad9e9deed"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
 test = ["Test", "Jive"]
