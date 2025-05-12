@@ -1,5 +1,6 @@
 using H3.API
 using H3.Lib
+using H3.GeoGraphs
 using Documenter
 
 makedocs(
@@ -15,5 +16,6 @@ makedocs(
     pages = Any[
         "Home" => "index.md",
         "API" => "API.md",
+        "GeoGraphs" => "GeoGraphs.md",
     ],
 )

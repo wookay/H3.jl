@@ -1,4 +1,4 @@
-export check_for_common_resolution
+#export check_for_common_resolution
 
 using ..H3.API
 
