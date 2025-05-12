@@ -67,6 +67,15 @@ originToDirectedEdges
 directedEdgeToBoundary
 ```
 
+# Vertex functions
+```@docs
+getNumVertexes
+cellToVertex
+cellToVertexes
+vertexToLatLng
+isValidVertex
+```
+
 # Miscellaneous H3 functions
 ```@docs
 cellAreaRads2
