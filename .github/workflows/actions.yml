@@ -1,6 +1,11 @@
 name: CI
 
-on: [pull_request, push]
+on:
+  push:
+    paths-ignore:
+      - README.md
+      - 'docs/**'
+  pull_request:
 
 # needed to allow julia-actions/cache to delete old caches that it has created
 permissions:
@@ -12,13 +17,15 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        julia-version: [1.11.5]    # April 4, 2025
+        julia-version: [1.12.0]         # October 7, 2025
         julia-arch: [x64]
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest]
         include:
           - julia-version: nightly
             os: ubuntu-latest
-          - julia-version: 1.6.7   # July 20, 2022
+          - julia-version: 1.11.7       # 2025-09-15
+            os: ubuntu-latest
+          - julia-version: 1.6.7        # 2022-07-20
             os: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
