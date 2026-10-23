@@ -7,27 +7,23 @@
 
 ```@contents
 Pages = ["API.md"]
-Depth = 2:2
+Depth = 2:3
 ```
 
-```@index
-Pages = ["API.md"]
-```
-
-# Error handling
+## Error handling
 ```@docs
 H3ErrorCode
 describeH3Error
 ```
 
-# Indexing functions
+## Indexing functions
 ```@docs
 latLngToCell
 cellToLatLng
 cellToBoundary
 ```
 
-# Index inspection functions
+## Index inspection functions
 ```@docs
 getResolution
 getBaseCellNumber
@@ -38,7 +34,7 @@ isResClassIII
 isPentagon
 ```
 
-# Grid traversal functions
+## Grid traversal functions
 ```@docs
 gridDisk
 maxGridDiskSize
@@ -54,7 +50,7 @@ cellToLocalIj
 localIjToCell
 ```
 
-# Hierarchical grid functions
+## Hierarchical grid functions
 ```@docs
 cellToParent
 cellToChildren
@@ -64,7 +60,15 @@ uncompactCells
 uncompactCellsSize
 ```
 
-# Unidirectional edge functions
+## Region functions
+```@docs
+maxPolygonToCellsSize
+polygonToCells
+maxPolygonToCellsSizeExperimental
+polygonToCellsExperimental
+```
+
+## Unidirectional edge functions
 ```@docs
 areNeighborCells
 cellsToDirectedEdge
@@ -76,7 +80,7 @@ originToDirectedEdges
 directedEdgeToBoundary
 ```
 
-# Vertex functions
+## Vertex functions
 ```@docs
 getNumVertexes
 cellToVertex
@@ -85,7 +89,7 @@ vertexToLatLng
 isValidVertex
 ```
 
-# Miscellaneous H3 functions
+## Miscellaneous H3 functions
 ```@docs
 cellAreaRads2
 cellAreaKm2
@@ -98,7 +102,7 @@ getRes0Cells
 res0CellCount
 ```
 
-# Coordinate Systems
+## Coordinate Systems
 ```@docs
 ijToIjk
 ijkToHex2d
@@ -112,4 +116,9 @@ faceIjkToH3
 hex2dToCoordIJK
 geoToVec3d
 geoToFaceIjk
+```
+
+## Types & Functions
+```@index
+Pages = ["API.md"]
 ```
